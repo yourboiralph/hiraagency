@@ -1,0 +1,82 @@
+import "server-only";
+
+import {
+  fromDbDate,
+  toDbDate,
+  workDateToday,
+  type WorkDate,
+} from "@/lib/date";
+import { db } from "@/lib/db";
+import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
+
+export type FeedLink = {
+  id: string;
+  url: string;
+  platform: string | null;
+  label: string | null;
+};
+
+export type FeedSubmission = {
+  id: string;
+  title: string;
+  notes: string | null;
+  status: SubmissionStatus;
+  reviewNote: string | null;
+  workDate: WorkDate;
+  createdAt: Date;
+  reviewedAt: Date | null;
+  author: { id: string; name: string };
+  reviewer: { name: string } | null;
+  links: FeedLink[];
+};
+
+export async function listProjectSubmissions(
+  projectId: string,
+  take = 60,
+): Promise<FeedSubmission[]> {
+  const rows = await db.submission.findMany({
+    where: { projectId },
+    orderBy: [{ workDate: "desc" }, { createdAt: "desc" }],
+    take,
+    select: {
+      id: true,
+      title: true,
+      notes: true,
+      status: true,
+      reviewNote: true,
+      workDate: true,
+      createdAt: true,
+      reviewedAt: true,
+      author: { select: { id: true, name: true } },
+      reviewer: { select: { name: true } },
+      links: {
+        orderBy: { position: "asc" },
+        select: { id: true, url: true, platform: true, label: true },
+      },
+    },
+  });
+
+  return rows.map((row) => ({
+    ...row,
+    workDate: fromDbDate(row.workDate),
+  }));
+}
+
+/** Dashboard: what this person submitted for one workday, newest first. */
+export async function listMySubmissionsForDate(
+  authorId: string,
+  workDate: WorkDate = workDateToday(),
+) {
+  return db.submission.findMany({
+    where: { authorId, workDate: toDbDate(workDate) },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      createdAt: true,
+      project: { select: { name: true, slug: true, color: true } },
+      _count: { select: { links: true } },
+    },
+  });
+}
