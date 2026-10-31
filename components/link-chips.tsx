@@ -11,21 +11,21 @@ export function LinkChips({
   if (links.length === 0) return null;
 
   return (
-    <ul className="mt-2 flex flex-wrap gap-1.5">
+    <ul className="mt-2 flex max-w-full flex-wrap gap-1.5">
       {links.map((link) => (
-        <li key={link.id}>
+        <li key={link.id} className="max-w-full min-w-0">
           <a
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
             title={link.url}
-            className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-foreground transition-colors hover:border-primary/40 hover:text-primary"
           >
             <LinkSimpleIcon
               aria-hidden="true"
               className="size-3.5 shrink-0"
             />
-            <span className="truncate">
+            <span className="min-w-0 truncate">
               {link.label ?? hostnameOf(link.url)}
             </span>
           </a>

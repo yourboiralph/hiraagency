@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { FormErrorSummary } from "@/components/form-error-summary";
+import { FormSelect } from "@/components/form-select";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,12 +28,16 @@ export function SubmissionForm({
   today,
   minDate,
   maxBackdateDays,
+  taskOrders,
+  defaultTaskOrderId,
 }: {
   projectId: string;
   projectSlug: string;
   today: string;
   minDate: string;
   maxBackdateDays: number;
+  taskOrders: { id: string; title: string }[];
+  defaultTaskOrderId?: string;
 }) {
   const [state, formAction, isPending] = useActionState(
     createSubmissionAction,
@@ -124,6 +129,32 @@ export function SubmissionForm({
           </p>
         ) : null}
       </div>
+
+      {taskOrders.length > 0 ? (
+        <div className="space-y-2">
+          <Label htmlFor={`${prefix}-task-order`}>
+            Task order{" "}
+            <span className="font-normal text-muted-foreground">optional</span>
+          </Label>
+          <FormSelect
+            id={`${prefix}-task-order`}
+            name="taskOrderId"
+            defaultValue={defaultTaskOrderId ?? ""}
+          >
+            <option value="">No task order</option>
+            {taskOrders.map((order) => (
+              <option key={order.id} value={order.id}>
+                {order.title}
+              </option>
+            ))}
+          </FormSelect>
+          <p className="text-xs text-muted-foreground">
+            Attach this work to a brief so it also appears on that task order.
+          </p>
+        </div>
+      ) : (
+        <input type="hidden" name="taskOrderId" value="" />
+      )}
 
       <fieldset className="space-y-3">
         <div className="flex items-baseline justify-between gap-3">

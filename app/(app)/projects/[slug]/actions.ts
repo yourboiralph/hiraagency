@@ -49,6 +49,31 @@ export async function createSubmissionAction(
     };
   }
 
+  // A task order is optional, but when given it must belong to this project
+  // and still be open. The id arrives from a form field, so it is untrusted.
+  const rawTaskOrderId = String(formData.get("taskOrderId") ?? "").trim();
+  let taskOrderId: string | null = null;
+
+  if (rawTaskOrderId) {
+    const taskOrder = await db.taskOrder.findFirst({
+      where: { id: rawTaskOrderId, projectId: project.id },
+      select: { id: true, status: true },
+    });
+
+    if (!taskOrder) {
+      return { formError: "That task order no longer exists." };
+    }
+
+    if (taskOrder.status !== "OPEN") {
+      return {
+        formError:
+          "That task order is closed. Submit without it or pick an open one.",
+      };
+    }
+
+    taskOrderId = taskOrder.id;
+  }
+
   const parsed = parseSubmission(formData);
   if (!parsed.ok) {
     return { formError: parsed.formError, fieldErrors: parsed.fieldErrors };
@@ -59,6 +84,7 @@ export async function createSubmissionAction(
       data: {
         authorId: user.id,
         projectId: project.id,
+        taskOrderId,
         workDate: toDbDate(parsed.data.workDate),
         title: parsed.data.title,
         notes: parsed.data.notes,
@@ -79,5 +105,10 @@ export async function createSubmissionAction(
   revalidatePath("/dashboard");
   revalidatePath("/admin");
 
-  redirect(`/projects/${project.slug}?submitted=1`);
+  // Send people back to the order they were filling when that is the context.
+  redirect(
+    taskOrderId
+      ? `/projects/${project.slug}/task-orders/${taskOrderId}?submitted=1`
+      : `/projects/${project.slug}?submitted=1`,
+  );
 }

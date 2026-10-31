@@ -11,6 +11,7 @@ export type ReviewItem = {
   createdAt: Date;
   project: { id: string; name: string; slug: string; color: string };
   author: { id: string; name: string; email: string };
+  taskOrder: { id: string; title: string } | null;
   links: {
     id: string;
     url: string;
@@ -33,6 +34,7 @@ export async function listPendingReviews(take = 50): Promise<ReviewItem[]> {
       createdAt: true,
       project: { select: { id: true, name: true, slug: true, color: true } },
       author: { select: { id: true, name: true, email: true } },
+      taskOrder: { select: { id: true, title: true } },
       links: {
         orderBy: { position: "asc" },
         select: { id: true, url: true, label: true, platform: true },

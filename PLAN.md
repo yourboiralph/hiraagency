@@ -98,6 +98,7 @@ enum Role             { ADMIN MEMBER }
 enum ProjectRole      { LEAD MEMBER }
 enum ProjectStatus    { ACTIVE ARCHIVED }
 enum SubmissionStatus { PENDING APPROVED NEEDS_REVISION }
+enum TaskOrderStatus  { OPEN CLOSED }
 
 model User {
   id               String   @id @default(cuid())
@@ -119,6 +120,7 @@ model User {
   submissions   Submission[]     @relation("Author")
   reviews       Submission[]     @relation("Reviewer")
   createdProjects Project[]      @relation("ProjectCreator")
+  createdTaskOrders TaskOrder[]  @relation("TaskOrderCreator")
 }
 
 // --- Auth.js adapter models (standard shapes) ---
@@ -187,6 +189,25 @@ model ProjectMember {
   @@index([userId])
 }
 
+// A brief posted inside a project. Leads/admins create and close it; members
+// attach submissions to it while it is OPEN.
+model TaskOrder {
+  id          String          @id @default(cuid())
+  projectId   String
+  title       String
+  brief       String?
+  status      TaskOrderStatus @default(OPEN)
+  createdById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User        @relation("TaskOrderCreator", fields: [createdById], references: [id])
+  submissions Submission[]
+
+  @@index([projectId, status])
+}
+
 model Attendance {
   id         String    @id @default(cuid())
   userId     String
@@ -204,6 +225,7 @@ model Submission {
   id           String           @id @default(cuid())
   authorId     String
   projectId    String
+  taskOrderId  String?          // optional: work can be free-form
   workDate     DateTime         @db.Date
   title        String
   notes        String?
@@ -214,14 +236,16 @@ model Submission {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  author   User             @relation("Author",   fields: [authorId],     references: [id], onDelete: Cascade)
-  reviewer User?            @relation("Reviewer", fields: [reviewedById], references: [id])
-  project  Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  links    SubmissionLink[]
+  author    User             @relation("Author",   fields: [authorId],     references: [id], onDelete: Cascade)
+  reviewer  User?            @relation("Reviewer", fields: [reviewedById], references: [id])
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskOrder TaskOrder?       @relation(fields: [taskOrderId], references: [id], onDelete: SetNull)
+  links     SubmissionLink[]
 
   @@index([projectId, workDate])
   @@index([authorId, workDate])
   @@index([status])
+  @@index([taskOrderId])
 }
 
 model SubmissionLink {
@@ -320,6 +344,10 @@ These differ from the original assumptions and are now the real state of the rep
 | **Revision notes** | Required (3-500 chars) for *needs revision*; approve is one click, no note | the member needs to know what to fix; approval needs no explanation |
 | **Review feedback** | No toast after a decision; the item leaves the queue and the empty state takes over | the queue itself is the confirmation, and a success step would be shown on an item that no longer exists |
 | **Decision visibility** | Feed shows the badge, the reviewer name and date, and the note (red-tinted when sent back) | members see *who* decided and *when*, not just a color |
+| **Redirect origin** | `AUTH_URL` / `NEXTAUTH_URL` are never set. In production a localhost value is discarded before `NextAuth()` reads the environment | Auth.js prefers `AUTH_URL` over the request host; a `.env.local` value copied to Vercel sent every sign-in/sign-out to `localhost`. The request host is the only correct origin behind a proxy |
+| **Task orders** | A `TaskOrder` belongs to one project; only project leads and global admins create or close them. Submissions take an optional `taskOrderId` | members can still submit free-form work; attaching is opt-in. Closing blocks new attachments, and `onDelete: SetNull` would keep history if an order were ever deleted |
+| **Closed orders** | The submit form only offers `OPEN` orders, and the action re-checks status before insert | a form loaded before someone closed the order cannot slip work in |
+| **Order context** | Order page lists its own submissions; the project feed and review queue show the order title as a chip | work stays findable from either direction |
 
 ---
 
@@ -410,11 +438,12 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 - `/set-password` — forced on first login
 
 ### Member
-- `/dashboard` — check-in card (3 states: not checked in / working / done), project summary; today's submissions arrive with the submissions phase
+- `/dashboard` — check-in card (3 states: not checked in / working / done), today's work, project summary
 - `/projects` — cards: project color, member count, my last submission
-- `/projects/[slug]` — feed grouped by day, member avatars, my status per day
-- `/projects/[slug]/submit` — date picker (≤ today, ≥ -7d), title, N links, notes
-- `/me` — check-in + submission calendar heatmap
+- `/projects/[slug]` — task orders section, feed grouped by day, member avatars, my status per day
+- `/projects/[slug]/task-orders/[id]` — brief, open/closed state, work attached to the order
+- `/projects/[slug]/submit` — date picker (≤ today, ≥ -7d), title, optional task order, N links, notes
+- `/me` — check-in + submission calendar heatmap (still a placeholder)
 
 ### Admin
 - `/admin` — today's attendance (checked in n/m, missing list with times), entry points to projects and people
@@ -435,6 +464,7 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 | 3 | Attendance | ✅ Member checks in once/day; admin sees checked-in vs missing for today |
 | 4 | Submissions | ✅ Member submits N links for a date; appears in project feed |
 | 5 | Review | ✅ Admin approves / requests revision; member sees status |
+| 5b | Task orders | ✅ Leads/admins post briefs; members attach work; closing blocks new submissions |
 | 6 | Polish | Heatmap, empty states, a11y pass, mobile, dark/light, seed data |
 
 ---
@@ -464,7 +494,8 @@ Template committed as **`.env.example`**. Copy to `.env.local`:
 DATABASE_URL="postgresql://...-pooler.../hira_agency?sslmode=require&pgbouncer=true"
 DIRECT_URL="postgresql://.../hira_agency?sslmode=require"
 AUTH_SECRET="<openssl rand -base64 32>"
-AUTH_URL="http://localhost:3000"
+# AUTH_URL is deliberately absent: Auth.js derives the origin from the request,
+# which is correct locally and on every Vercel deployment.
 AUTH_TRUST_HOST="true"
 NEXT_PUBLIC_APP_NAME="HiraAgency Workspace"
 APP_TIMEZONE="Asia/Manila"

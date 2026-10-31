@@ -35,6 +35,11 @@ enum SubmissionStatus {
   NEEDS_REVISION
 }
 
+enum TaskOrderStatus {
+  OPEN
+  CLOSED
+}
+
 // ─────────────────────────────────────────────────────────────
 //  Auth
 // ─────────────────────────────────────────────────────────────
@@ -51,14 +56,15 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  memberships     ProjectMember[] @relation("MembershipUser")
-  addedMembers    ProjectMember[] @relation("MembershipAdder")
-  attendance      Attendance[]
-  submissions     Submission[]    @relation("Author")
-  reviews         Submission[]    @relation("Reviewer")
-  createdProjects Project[]       @relation("ProjectCreator")
+  accounts          Account[]
+  sessions          Session[]
+  memberships       ProjectMember[] @relation("MembershipUser")
+  addedMembers      ProjectMember[] @relation("MembershipAdder")
+  attendance        Attendance[]
+  submissions       Submission[]    @relation("Author")
+  reviews           Submission[]    @relation("Reviewer")
+  createdProjects   Project[]       @relation("ProjectCreator")
+  createdTaskOrders TaskOrder[]     @relation("TaskOrderCreator")
 }
 
 model Account {
@@ -118,6 +124,7 @@ model Project {
   createdBy   User            @relation("ProjectCreator", fields: [createdById], references: [id])
   members     ProjectMember[]
   submissions Submission[]
+  taskOrders  TaskOrder[]
 
   @@index([status])
 }
@@ -135,6 +142,25 @@ model ProjectMember {
 
   @@id([projectId, userId])
   @@index([userId])
+}
+
+/// A brief posted inside a project. Members attach their submissions to it.
+/// Only project leads and administrators create or close them.
+model TaskOrder {
+  id          String          @id @default(cuid())
+  projectId   String
+  title       String
+  brief       String?
+  status      TaskOrderStatus @default(OPEN)
+  createdById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation("TaskOrderCreator", fields: [createdById], references: [id])
+  submissions Submission[]
+
+  @@index([projectId, status])
 }
 
 /// One row per user per Manila calendar day.
@@ -156,6 +182,7 @@ model Submission {
   id           String           @id @default(cuid())
   authorId     String
   projectId    String
+  taskOrderId  String?
   workDate     DateTime         @db.Date
   title        String
   notes        String?
@@ -166,14 +193,16 @@ model Submission {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  author   User             @relation("Author", fields: [authorId], references: [id], onDelete: Cascade)
-  reviewer User?            @relation("Reviewer", fields: [reviewedById], references: [id])
-  project  Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  links    SubmissionLink[]
+  author    User             @relation("Author", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewer  User?            @relation("Reviewer", fields: [reviewedById], references: [id])
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskOrder TaskOrder?       @relation(fields: [taskOrderId], references: [id], onDelete: SetNull)
+  links     SubmissionLink[]
 
   @@index([projectId, workDate])
   @@index([authorId, workDate])
   @@index([status])
+  @@index([taskOrderId])
 }
 
 model SubmissionLink {

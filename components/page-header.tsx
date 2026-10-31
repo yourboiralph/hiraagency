@@ -19,7 +19,7 @@ export function PageHeader({
       {back ? (
         <Link
           href={back.href}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex max-w-full items-center gap-1.5 truncate text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeftIcon aria-hidden="true" className="size-4" />
           {back.label}
@@ -33,9 +33,11 @@ export function PageHeader({
               {eyebrow}
             </p>
           ) : null}
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="[overflow-wrap:anywhere] text-2xl font-semibold tracking-tight">
+            {title}
+          </h1>
           {description ? (
-            <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+            <p className="mt-1 max-w-prose text-sm [overflow-wrap:anywhere] text-muted-foreground">
               {description}
             </p>
           ) : null}

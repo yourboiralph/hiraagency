@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   CheckCircleIcon,
+  ClipboardTextIcon,
   PlusIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-import { LinkChips } from "@/components/link-chips";
 import { PageHeader } from "@/components/page-header";
 import {
   ProjectStatusBadge,
-  SubmissionStatusBadge,
+  TaskOrderStatusBadge,
 } from "@/components/status-badge";
+import { SubmissionCard } from "@/components/submission-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/authz";
 import {
   formatInstantDate,
-  formatTime,
   workDateLabel,
   workDateToday,
 } from "@/lib/date";
@@ -25,7 +25,9 @@ import {
   listProjectSubmissions,
   type FeedSubmission,
 } from "@/lib/submissions";
-import { cn } from "@/lib/utils";
+import { canManageTaskOrders, listTaskOrders } from "@/lib/task-orders";
+
+import { NewTaskOrderDialog } from "./task-orders/new-task-order-dialog";
 
 export const metadata: Metadata = {
   title: "Project",
@@ -38,76 +40,6 @@ function initials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
-}
-
-function SubmissionItem({
-  submission,
-  today,
-}: {
-  submission: FeedSubmission;
-  today: string;
-}) {
-  const loggedAt =
-    submission.workDate === today
-      ? formatTime(submission.createdAt)
-      : formatInstantDate(submission.createdAt);
-
-  return (
-    <li className="rounded-lg border border-border/70 p-3">
-      <div className="flex items-start gap-2.5">
-        <span
-          aria-hidden="true"
-          className="grid size-7 shrink-0 place-items-center rounded-full bg-muted font-mono text-[10px] font-medium"
-        >
-          {initials(submission.author.name)}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <p className="text-sm font-medium">{submission.author.name}</p>
-            <span className="font-mono text-[11px] text-muted-foreground">
-              logged {loggedAt}
-            </span>
-            <SubmissionStatusBadge status={submission.status} />
-          </div>
-
-          <p className="mt-1.5 text-sm">{submission.title}</p>
-
-          {submission.notes ? (
-            <p className="mt-1 whitespace-pre-line text-xs text-muted-foreground">
-              {submission.notes}
-            </p>
-          ) : null}
-
-          <LinkChips links={submission.links} />
-
-          {submission.reviewNote ? (
-            <p
-              className={cn(
-                "mt-2 rounded-md px-2 py-1.5 text-xs",
-                submission.status === "NEEDS_REVISION"
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-muted/50 text-muted-foreground",
-              )}
-            >
-              <span className="font-medium">Reviewer:</span>{" "}
-              {submission.reviewNote}
-            </p>
-          ) : null}
-
-          {submission.status !== "PENDING" ? (
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              {submission.status === "APPROVED" ? "Approved" : "Sent back"} by{" "}
-              {submission.reviewer?.name ?? "an administrator"}
-              {submission.reviewedAt
-                ? ` · ${formatInstantDate(submission.reviewedAt)}`
-                : ""}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </li>
-  );
 }
 
 export default async function ProjectPage({
@@ -123,8 +55,10 @@ export default async function ProjectPage({
   const { project, myRole, members } = await getProjectForUser(slug, user);
 
   const submissions = await listProjectSubmissions(project.id);
+  const taskOrders = await listTaskOrders(project.id);
   const today = workDateToday();
   const canSubmit = myRole !== null && project.status === "ACTIVE";
+  const canManageOrders = canManageTaskOrders(user, myRole);
 
   const grouped = new Map<string, FeedSubmission[]>();
   for (const submission of submissions) {
@@ -188,6 +122,70 @@ export default async function ProjectPage({
         </span>
       </div>
 
+      <section aria-labelledby="task-orders-heading" className="space-y-2">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="task-orders-heading"
+              className="text-sm font-medium text-muted-foreground"
+            >
+              Task orders
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Briefs members attach their work to.
+            </p>
+          </div>
+          {canManageOrders ? (
+            <NewTaskOrderDialog projectId={project.id} />
+          ) : null}
+        </div>
+
+        {taskOrders.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+            No task orders yet.
+            {canManageOrders
+              ? " Create one to give the team a brief to work against."
+              : " A lead can create one when there is a brief."}
+          </p>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {taskOrders.map((order) => (
+              <li key={order.id}>
+                <Link
+                  href={`/projects/${project.slug}/task-orders/${order.id}`}
+                  className="group flex h-full flex-col gap-2 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <div className="flex items-start gap-2">
+                    <ClipboardTextIcon
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                    />
+                    <p className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {order.title}
+                    </p>
+                    <TaskOrderStatusBadge status={order.status} />
+                  </div>
+
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                    {order.brief ?? "No brief."}
+                  </p>
+
+                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
+                    <span className="font-mono">
+                      {order.submissionCount}{" "}
+                      {order.submissionCount === 1
+                        ? "submission"
+                        : "submissions"}
+                    </span>
+                    <span>Opened {formatInstantDate(order.createdAt)}</span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="grid items-start gap-3 lg:grid-cols-3">
         <section
           aria-labelledby="feed-heading"
@@ -244,10 +242,11 @@ export default async function ProjectPage({
                   </header>
                   <ul className="space-y-2.5">
                     {items.map((submission) => (
-                      <SubmissionItem
+                      <SubmissionCard
                         key={submission.id}
                         submission={submission}
                         today={today}
+                        projectSlug={project.slug}
                       />
                     ))}
                   </ul>

@@ -27,17 +27,21 @@ export type FeedSubmission = {
   reviewedAt: Date | null;
   author: { id: string; name: string };
   reviewer: { name: string } | null;
+  taskOrder: { id: string; title: string } | null;
   links: FeedLink[];
 };
 
 export async function listProjectSubmissions(
   projectId: string,
-  take = 60,
+  options: { take?: number; taskOrderId?: string } = {},
 ): Promise<FeedSubmission[]> {
   const rows = await db.submission.findMany({
-    where: { projectId },
+    where: {
+      projectId,
+      ...(options.taskOrderId ? { taskOrderId: options.taskOrderId } : {}),
+    },
     orderBy: [{ workDate: "desc" }, { createdAt: "desc" }],
-    take,
+    take: options.take ?? 60,
     select: {
       id: true,
       title: true,
@@ -49,6 +53,7 @@ export async function listProjectSubmissions(
       reviewedAt: true,
       author: { select: { id: true, name: true } },
       reviewer: { select: { name: true } },
+      taskOrder: { select: { id: true, title: true } },
       links: {
         orderBy: { position: "asc" },
         select: { id: true, url: true, platform: true, label: true },

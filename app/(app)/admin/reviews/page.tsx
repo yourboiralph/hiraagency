@@ -26,19 +26,24 @@ function ReviewCard({ item }: { item: ReviewItem }) {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Link
               href={`/projects/${item.project.slug}`}
-              className="text-sm font-medium hover:underline"
+              className="text-sm font-medium [overflow-wrap:anywhere] hover:underline"
             >
               {item.project.name}
             </Link>
             <span className="font-mono text-[11px] text-muted-foreground">
               work date {formatWorkDate(item.workDate)}
             </span>
+            {item.taskOrder ? (
+              <span className="rounded-md bg-info/10 px-1.5 py-0.5 text-[11px] text-info">
+                {item.taskOrder.title}
+              </span>
+            ) : null}
           </div>
 
-          <p className="mt-1.5 text-sm">{item.title}</p>
+          <p className="mt-1.5 text-sm [overflow-wrap:anywhere]">{item.title}</p>
 
           {item.notes ? (
-            <p className="mt-1 whitespace-pre-line text-xs text-muted-foreground">
+            <p className="mt-1 whitespace-pre-line text-xs [overflow-wrap:anywhere] text-muted-foreground">
               {item.notes}
             </p>
           ) : null}
@@ -47,7 +52,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
         </div>
 
         <div className="text-right">
-          <p className="text-sm">{item.author.name}</p>
+          <p className="text-sm [overflow-wrap:anywhere]">{item.author.name}</p>
           <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
             logged {formatInstantDate(item.createdAt)}
           </p>

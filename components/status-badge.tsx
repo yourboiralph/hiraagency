@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import type {
   ProjectStatus,
   SubmissionStatus,
+  TaskOrderStatus,
 } from "@/lib/generated/prisma/enums";
 
 export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
@@ -75,6 +76,22 @@ export function SubmissionStatusBadge({
       className="border-warning/30 bg-warning/10 text-warning"
     >
       Pending review
+    </Badge>
+  );
+}
+
+export function TaskOrderStatusBadge({ status }: { status: TaskOrderStatus }) {
+  if (status === "CLOSED") {
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        Closed
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="outline" className="border-info/30 bg-info/10 text-info">
+      Open
     </Badge>
   );
 }

@@ -6,6 +6,45 @@ import { verifyPassword } from "@/lib/password";
 import { loginSchema } from "@/lib/validation/auth";
 
 /**
+ * Auth.js prefers `AUTH_URL` over the incoming request host when it builds
+ * absolute redirect URLs. A `http://localhost:3000` value copied from
+ * `.env.local` into a hosting provider therefore sends every sign-in and
+ * sign-out to the developer's machine. In production the request host is the
+ * only correct source, so a localhost value is ignored.
+ *
+ * This runs before `NextAuth()` reads the environment, and it is a guard, not a
+ * configuration style: simply leave `AUTH_URL` unset everywhere.
+ */
+function discardLocalAuthUrl() {
+  if (process.env.NODE_ENV !== "production") return;
+
+  for (const key of ["AUTH_URL", "NEXTAUTH_URL"] as const) {
+    const value = process.env[key]?.trim();
+    if (!value) continue;
+
+    try {
+      const { hostname } = new URL(value);
+      const isLocal =
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1" ||
+        hostname === "[::1]";
+
+      if (!isLocal) continue;
+
+      delete process.env[key];
+      console.warn(
+        `[auth] Ignoring ${key}=${value} in production; redirects follow the request host instead.`,
+      );
+    } catch {
+      // Not parseable as a URL — Auth.js would ignore it as well.
+    }
+  }
+}
+
+discardLocalAuthUrl();
+
+/**
  * Auth.js v5, credentials-only.
  *
  * No Prisma adapter is registered on purpose:

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/authz";
 import { MAX_BACKDATE_DAYS, addWorkDays, workDateToday } from "@/lib/date";
 import { getProjectForUser } from "@/lib/projects";
+import { listOpenTaskOrders } from "@/lib/task-orders";
 
 import { SubmissionForm } from "./submission-form";
 
@@ -15,11 +16,14 @@ export const metadata: Metadata = {
 
 export default async function SubmitWorkPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ taskOrderId?: string }>;
 }) {
   const user = await requireUser();
   const { slug } = await params;
+  const { taskOrderId } = await searchParams;
   const { project, myRole } = await getProjectForUser(slug, user);
 
   // Submitting is for members only; administrators can read every project but
@@ -28,6 +32,15 @@ export default async function SubmitWorkPage({
 
   const today = workDateToday();
   const minDate = addWorkDays(today, -MAX_BACKDATE_DAYS);
+
+  // Preselect only when the id is one of this project's open orders: the query
+  // string is user input.
+  const openTaskOrders = await listOpenTaskOrders(project.id);
+  const initialTaskOrderId = openTaskOrders.some(
+    (order) => order.id === taskOrderId,
+  )
+    ? taskOrderId
+    : undefined;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -61,6 +74,8 @@ export default async function SubmitWorkPage({
             today={today}
             minDate={minDate}
             maxBackdateDays={MAX_BACKDATE_DAYS}
+            taskOrders={openTaskOrders}
+            defaultTaskOrderId={initialTaskOrderId}
           />
         </div>
       )}
