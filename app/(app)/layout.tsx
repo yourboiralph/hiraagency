@@ -11,7 +11,12 @@ export default async function AppLayout({
   return (
     <div className="min-h-dvh bg-background">
       <AppSidebar
-        user={{ name: user.name, email: user.email, role: user.role }}
+        user={{
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: user.role,
+        }}
       />
       <div className="md:pl-60">
         <main className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-10">

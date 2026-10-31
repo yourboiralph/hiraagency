@@ -12,12 +12,14 @@ import {
 } from "@phosphor-icons/react";
 
 import { signOutAction } from "@/app/(app)/actions";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type NavUser = {
   name: string;
   email: string;
+  image: string | null;
   role: "ADMIN" | "MEMBER";
 };
 
@@ -37,15 +39,6 @@ const NAV_ITEMS: NavItem[] = [
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }
 
 function NavLinks({
@@ -140,12 +133,7 @@ export function AppSidebar({ user }: { user: NavUser }) {
 
         <div className="border-t border-border p-3">
           <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-            <span
-              aria-hidden="true"
-              className="grid size-8 shrink-0 place-items-center rounded-full bg-muted font-mono text-[11px] font-medium"
-            >
-              {initials(user.name)}
-            </span>
+            <UserAvatar name={user.name} image={user.image} size="md" />
             <div className="min-w-0 flex-1 leading-tight">
               <p className="truncate text-sm font-medium">{user.name}</p>
               <p className="truncate font-mono text-[11px] text-muted-foreground">
@@ -169,10 +157,8 @@ export function AppSidebar({ user }: { user: NavUser }) {
             </span>
             <span className="text-sm font-semibold">HiraAgency</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="font-mono text-[11px] text-muted-foreground">
-              {initials(user.name)}
-            </span>
+          <div className="flex items-center gap-2">
+            <UserAvatar name={user.name} image={user.image} size="xs" />
             <SignOutButton compact />
           </div>
         </div>

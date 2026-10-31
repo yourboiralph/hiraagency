@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { FormErrorSummary } from "@/components/form-error-summary";
 import { FormSelect } from "@/components/form-select";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,18 +22,10 @@ type Member = {
   userId: string;
   name: string;
   email: string;
+  image: string | null;
   role: "LEAD" | "MEMBER";
   isActive: boolean;
 };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
 
 const initialState: MemberFormState = {};
 
@@ -58,12 +51,11 @@ export function MembersPanel({
               key={member.userId}
               className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 first:pt-0 last:pb-0"
             >
-              <span
-                aria-hidden="true"
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-muted font-mono text-[11px] font-medium"
-              >
-                {initials(member.name)}
-              </span>
+              <UserAvatar
+                name={member.name}
+                image={member.image}
+                size="md"
+              />
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

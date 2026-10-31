@@ -9,6 +9,7 @@ export async function listUsers() {
       id: true,
       name: true,
       email: true,
+      image: true,
       role: true,
       isActive: true,
       mustChangePassword: true,

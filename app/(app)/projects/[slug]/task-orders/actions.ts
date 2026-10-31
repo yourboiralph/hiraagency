@@ -7,8 +7,10 @@ import { requireUser } from "@/lib/authz";
 import { db } from "@/lib/db";
 import { fieldErrorsOf } from "@/lib/validation/errors";
 import {
+  taskOrderIdSchema,
   taskOrderSchema,
   taskOrderStatusSchema,
+  taskOrderVisibilitySchema,
 } from "@/lib/validation/task-order";
 
 export type TaskOrderState = {
@@ -119,4 +121,75 @@ export async function setTaskOrderStatusAction(
   // Covers the project page, the order page and the submit form's order list.
   revalidatePath(`/projects/${order.project.slug}`, "layout");
   revalidatePath("/admin/reviews");
+}
+
+export async function setTaskOrderHiddenAction(
+  formData: FormData,
+): Promise<void> {
+  const parsed = taskOrderVisibilitySchema.safeParse({
+    taskOrderId: formData.get("taskOrderId"),
+    hidden: formData.get("hidden"),
+  });
+
+  if (!parsed.success) return;
+
+  const order = await db.taskOrder.findUnique({
+    where: { id: parsed.data.taskOrderId },
+    select: {
+      id: true,
+      projectId: true,
+      project: { select: { slug: true } },
+    },
+  });
+
+  if (!order) return;
+
+  const access = await loadManageableProject(order.projectId);
+  if (!access.ok) return;
+
+  await db.taskOrder.update({
+    where: { id: order.id },
+    data: { hidden: parsed.data.hidden === "true" },
+  });
+
+  revalidatePath(`/projects/${order.project.slug}`, "layout");
+  revalidatePath("/admin/reviews");
+}
+
+export async function deleteTaskOrderAction(
+  _previous: TaskOrderState,
+  formData: FormData,
+): Promise<TaskOrderState> {
+  const parsed = taskOrderIdSchema.safeParse({
+    taskOrderId: formData.get("taskOrderId"),
+  });
+
+  if (!parsed.success) return { formError: "Missing task order." };
+
+  const order = await db.taskOrder.findUnique({
+    where: { id: parsed.data.taskOrderId },
+    select: {
+      id: true,
+      projectId: true,
+      project: { select: { slug: true } },
+    },
+  });
+
+  if (!order) return { formError: "That task order no longer exists." };
+
+  const access = await loadManageableProject(order.projectId);
+  if (!access.ok) return { formError: access.message };
+
+  try {
+    // Submission.taskOrderId is `onDelete: SetNull`, so attached work stays in
+    // the project feed; it simply loses the order link.
+    await db.taskOrder.delete({ where: { id: order.id } });
+  } catch {
+    return { formError: "The task order could not be deleted. Try again." };
+  }
+
+  revalidatePath(`/projects/${order.project.slug}`, "layout");
+  revalidatePath("/admin/reviews");
+
+  redirect(`/projects/${order.project.slug}`);
 }

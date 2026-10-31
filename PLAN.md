@@ -163,6 +163,7 @@ model Project {
   name        String
   slug        String        @unique
   description String?
+  image       String?       // object key in Neon Object Storage
   color       String        @default("#22C55E")
   status      ProjectStatus @default(ACTIVE)
   createdById String
@@ -197,6 +198,7 @@ model TaskOrder {
   title       String
   brief       String?
   status      TaskOrderStatus @default(OPEN)
+  hidden      Boolean         @default(false)   // hidden from members
   createdById String
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -241,6 +243,7 @@ model Submission {
   project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   taskOrder TaskOrder?       @relation(fields: [taskOrderId], references: [id], onDelete: SetNull)
   links     SubmissionLink[]
+  images    SubmissionImage[]
 
   @@index([projectId, workDate])
   @@index([authorId, workDate])
@@ -255,6 +258,18 @@ model SubmissionLink {
   platform     String?   // youtube | drive | figma | notion | dropbox | other
   label        String?
   position     Int      @default(0)
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+// Pictures attached to a submission; bytes live in Neon Object Storage.
+model SubmissionImage {
+  id           String @id @default(cuid())
+  submissionId String
+  key          String
+  position     Int    @default(0)
 
   submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
@@ -348,6 +363,13 @@ These differ from the original assumptions and are now the real state of the rep
 | **Task orders** | A `TaskOrder` belongs to one project; only project leads and global admins create or close them. Submissions take an optional `taskOrderId` | members can still submit free-form work; attaching is opt-in. Closing blocks new attachments, and `onDelete: SetNull` would keep history if an order were ever deleted |
 | **Closed orders** | The submit form only offers `OPEN` orders, and the action re-checks status before insert | a form loaded before someone closed the order cannot slip work in |
 | **Order context** | Order page lists its own submissions; the project feed and review queue show the order title as a chip | work stays findable from either direction |
+| **Hiding an order** | `hidden` boolean. Members lose it from the project page, the submit selector and direct URLs; the order chip on attached submissions is suppressed for them too. Leads/admins keep the badge and controls | removes clutter without deleting history, and the hidden title never leaks through a submission |
+| **Deleting an order** | Hard delete. `Submission.taskOrderId` is `onDelete: SetNull` | attached work survives in the project feed, simply detached; the delete dialog spells out the count and consequence |
+| **Media storage** | Neon Object Storage through `@aws-sdk/client-s3` (path-style, SigV4). The browser gets a 5-minute presigned PUT, uploads directly, and the database stores only the object key | image bytes stay out of Postgres and clear of Vercel's request-body limit |
+| **Private media** | `/api/media/[...key]` requires a session. Keys are `<kind>/<userId>/<uuid>.<ext>`; saving re-checks the prefix and calls `HeadObject` | a leaked URL is useless without a session, and a member cannot attach somebody else's upload |
+| **Upload limits** | Avatars 2 MB; project covers and each submission picture 5 MB; up to 6 pictures per submission; JPEG, PNG or WebP | enforced in the uploader and again on save |
+| **Image fallbacks** | Project covers fall back to the colored initial, avatars to initials | records without images keep rendering exactly as before |
+| **Bucket CORS** | The Neon bucket must allow browser `PUT`/`GET`/`HEAD` from the app origins with `Content-Type` allowed | presigned uploads are cross-origin; without CORS the upload fails in the browser |
 
 ---
 
@@ -442,8 +464,8 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 - `/projects` — cards: project color, member count, my last submission
 - `/projects/[slug]` — task orders section, feed grouped by day, member avatars, my status per day
 - `/projects/[slug]/task-orders/[id]` — brief, open/closed state, work attached to the order
-- `/projects/[slug]/submit` — date picker (≤ today, ≥ -7d), title, optional task order, N links, notes
-- `/me` — check-in + submission calendar heatmap (still a placeholder)
+- `/projects/[slug]/submit` — date picker (≤ today, ≥ -7d), title, optional task order, N links, up to 6 pictures, notes
+- `/me` — profile picture and account; check-in/submission history still pending
 
 ### Admin
 - `/admin` — today's attendance (checked in n/m, missing list with times), entry points to projects and people
@@ -465,6 +487,7 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 | 4 | Submissions | ✅ Member submits N links for a date; appears in project feed |
 | 5 | Review | ✅ Admin approves / requests revision; member sees status |
 | 5b | Task orders | ✅ Leads/admins post briefs; members attach work; closing blocks new submissions |
+| 5c | Media | ✅ Submission pictures, project covers and avatars on Neon Object Storage |
 | 6 | Polish | Heatmap, empty states, a11y pass, mobile, dark/light, seed data |
 
 ---
@@ -500,9 +523,14 @@ AUTH_TRUST_HOST="true"
 NEXT_PUBLIC_APP_NAME="HiraAgency Workspace"
 APP_TIMEZONE="Asia/Manila"
 MAX_BACKDATE_DAYS="7"
+AWS_ENDPOINT_URL_S3="https://br-xxxx.storage.c-2.ap-southeast-1.aws.neon.tech"
+AWS_REGION="ap-southeast-1"
+AWS_ACCESS_KEY_ID="<credential token_id>"
+AWS_SECRET_ACCESS_KEY="<credential s3_secret_access_key>"
+NEON_STORAGE_BUCKET="hira-media"
 SEED_ADMIN_EMAIL="admin@hiraagency.com"
 SEED_ADMIN_NAME="Admin"
 SEED_ADMIN_PASSWORD=""
 ```
 
-Neon setup: create project `hira-agency`, branch `main`, copy pooled + direct strings. Use a separate branch for local dev if you want isolation.
+Neon setup: create project `hira-agency`, branch `main`, copy pooled + direct strings. Use a separate branch for local dev if you want isolation. Create a **private** storage bucket and a `storage:read` + `storage:write` credential; allow the app origins in the bucket CORS for `PUT`, `GET` and `HEAD`.

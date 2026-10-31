@@ -8,10 +8,12 @@ import {
 
 import { PageHeader } from "@/components/page-header";
 import {
+  HiddenBadge,
   ProjectStatusBadge,
   TaskOrderStatusBadge,
 } from "@/components/status-badge";
 import { SubmissionCard } from "@/components/submission-card";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/authz";
@@ -33,15 +35,6 @@ export const metadata: Metadata = {
   title: "Project",
 };
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 export default async function ProjectPage({
   params,
   searchParams,
@@ -55,10 +48,12 @@ export default async function ProjectPage({
   const { project, myRole, members } = await getProjectForUser(slug, user);
 
   const submissions = await listProjectSubmissions(project.id);
-  const taskOrders = await listTaskOrders(project.id);
   const today = workDateToday();
   const canSubmit = myRole !== null && project.status === "ACTIVE";
   const canManageOrders = canManageTaskOrders(user, myRole);
+  const taskOrders = await listTaskOrders(project.id, {
+    includeHidden: canManageOrders,
+  });
 
   const grouped = new Map<string, FeedSubmission[]>();
   for (const submission of submissions) {
@@ -163,7 +158,10 @@ export default async function ProjectPage({
                     <p className="min-w-0 flex-1 truncate text-sm font-medium">
                       {order.title}
                     </p>
-                    <TaskOrderStatusBadge status={order.status} />
+                    <span className="flex shrink-0 items-center gap-1">
+                      {order.hidden ? <HiddenBadge /> : null}
+                      <TaskOrderStatusBadge status={order.status} />
+                    </span>
                   </div>
 
                   <p className="line-clamp-2 text-xs text-muted-foreground">
@@ -247,6 +245,7 @@ export default async function ProjectPage({
                         submission={submission}
                         today={today}
                         projectSlug={project.slug}
+                        showHiddenTaskOrders={canManageOrders}
                       />
                     ))}
                   </ul>
@@ -271,12 +270,11 @@ export default async function ProjectPage({
                 key={member.userId}
                 className="flex items-center gap-2.5 py-2.5"
               >
-                <span
-                  aria-hidden="true"
-                  className="grid size-7 shrink-0 place-items-center rounded-full bg-muted font-mono text-[10px] font-medium"
-                >
-                  {initials(member.name)}
-                </span>
+                <UserAvatar
+                  name={member.name}
+                  image={member.image}
+                  size="sm"
+                />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{member.name}</span>
                   <span className="block truncate font-mono text-[11px] text-muted-foreground">

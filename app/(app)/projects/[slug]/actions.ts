@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
 import { toDbDate } from "@/lib/date";
 import { db } from "@/lib/db";
+import { MAX_SUBMISSION_IMAGES } from "@/lib/submission-constants";
+import { verifyUploadedImage } from "@/lib/storage";
 import { parseSubmission } from "@/lib/validation/submission";
 
 export type SubmissionFormState = {
@@ -57,11 +59,18 @@ export async function createSubmissionAction(
   if (rawTaskOrderId) {
     const taskOrder = await db.taskOrder.findFirst({
       where: { id: rawTaskOrderId, projectId: project.id },
-      select: { id: true, status: true },
+      select: { id: true, status: true, hidden: true },
     });
 
     if (!taskOrder) {
       return { formError: "That task order no longer exists." };
+    }
+
+    if (taskOrder.hidden) {
+      return {
+        formError:
+          "That task order is hidden. Submit without it or pick another one.",
+      };
     }
 
     if (taskOrder.status !== "OPEN") {
@@ -79,6 +88,28 @@ export async function createSubmissionAction(
     return { formError: parsed.formError, fieldErrors: parsed.fieldErrors };
   }
 
+  const imageKeys = formData
+    .getAll("imageKey")
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  if (imageKeys.length > MAX_SUBMISSION_IMAGES) {
+    return {
+      formError: `Add at most ${MAX_SUBMISSION_IMAGES} pictures per submission.`,
+    };
+  }
+
+  // Keys are user input too: confirm each object exists and belongs to this
+  // author before writing it into the submission.
+  for (const key of imageKeys) {
+    const image = await verifyUploadedImage(key, `submissions/${user.id}`);
+    if (!image) {
+      return {
+        formError: "One of the pictures is no longer available. Re-upload it.",
+      };
+    }
+  }
+
   try {
     await db.submission.create({
       data: {
@@ -93,6 +124,9 @@ export async function createSubmissionAction(
             ...link,
             position,
           })),
+        },
+        images: {
+          create: imageKeys.map((key, position) => ({ key, position })),
         },
       },
     });

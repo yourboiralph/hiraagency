@@ -11,6 +11,7 @@ export type SessionUser = {
   id: string;
   email: string;
   name: string;
+  image: string | null;
   role: Role;
   mustChangePassword: boolean;
 };
@@ -35,6 +36,7 @@ export const getSessionUser = cache(
         id: true,
         email: true,
         name: true,
+        image: true,
         role: true,
         isActive: true,
         mustChangePassword: true,
@@ -48,6 +50,7 @@ export const getSessionUser = cache(
       id: account.id,
       email: account.email,
       name: account.name,
+      image: account.image,
       role: account.role,
       mustChangePassword: account.mustChangePassword,
     };

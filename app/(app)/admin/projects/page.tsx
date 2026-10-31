@@ -62,7 +62,11 @@ export default async function AdminProjectsPage() {
                   href={`/admin/projects/${project.id}`}
                   className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
                 >
-                  <ProjectMark name={project.name} color={project.color} />
+                  <ProjectMark
+                    name={project.name}
+                    color={project.color}
+                    image={project.image}
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">

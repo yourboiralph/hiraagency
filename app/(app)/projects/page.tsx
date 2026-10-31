@@ -75,7 +75,11 @@ export default async function ProjectsPage() {
                   className="group flex h-full flex-col gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   <div className="flex items-start gap-3">
-                    <ProjectMark name={project.name} color={project.color} />
+                    <ProjectMark
+                      name={project.name}
+                      color={project.color}
+                      image={project.image}
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
                         {project.name}
@@ -128,6 +132,7 @@ export default async function ProjectsPage() {
                   <ProjectMark
                     name={project.name}
                     color={project.color}
+                    image={project.image}
                     size="sm"
                   />
                   <span className="min-w-0 flex-1 truncate text-sm">

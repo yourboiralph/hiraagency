@@ -4,6 +4,7 @@ import { UsersIcon } from "@phosphor-icons/react/dist/ssr";
 import { EmptyPanel } from "@/components/empty-panel";
 import { PageHeader } from "@/components/page-header";
 import { RoleBadge } from "@/components/status-badge";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/authz";
 import { formatInstantDate } from "@/lib/date";
@@ -15,15 +16,6 @@ import { UserRowActions } from "./user-row-actions";
 export const metadata: Metadata = {
   title: "People",
 };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
 
 export default async function AdminUsersPage() {
   const admin = await requireAdmin();
@@ -66,12 +58,7 @@ export default async function AdminUsersPage() {
               key={user.id}
               className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
             >
-              <span
-                aria-hidden="true"
-                className="grid size-9 shrink-0 place-items-center rounded-full bg-muted font-mono text-[11px] font-medium"
-              >
-                {initials(user.name)}
-              </span>
+              <UserAvatar name={user.name} image={user.image} size="lg" />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

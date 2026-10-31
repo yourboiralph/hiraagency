@@ -9,7 +9,7 @@ export type ReviewItem = {
   notes: string | null;
   workDate: WorkDate;
   createdAt: Date;
-  project: { id: string; name: string; slug: string; color: string };
+  project: { id: string; name: string; slug: string; color: string; image: string | null };
   author: { id: string; name: string; email: string };
   taskOrder: { id: string; title: string } | null;
   links: {
@@ -18,6 +18,7 @@ export type ReviewItem = {
     label: string | null;
     platform: string | null;
   }[];
+  images: { id: string; key: string }[];
 };
 
 /** Oldest first: the queue is worked front to back, not newest first. */
@@ -32,12 +33,18 @@ export async function listPendingReviews(take = 50): Promise<ReviewItem[]> {
       notes: true,
       workDate: true,
       createdAt: true,
-      project: { select: { id: true, name: true, slug: true, color: true } },
+      project: {
+        select: { id: true, name: true, slug: true, color: true, image: true },
+      },
       author: { select: { id: true, name: true, email: true } },
       taskOrder: { select: { id: true, title: true } },
       links: {
         orderBy: { position: "asc" },
         select: { id: true, url: true, label: true, platform: true },
+      },
+      images: {
+        orderBy: { position: "asc" },
+        select: { id: true, key: true },
       },
     },
   });

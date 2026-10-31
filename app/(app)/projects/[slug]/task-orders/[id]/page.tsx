@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   CheckCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
   LockSimpleIcon,
   LockSimpleOpenIcon,
   PlusIcon,
@@ -10,7 +12,10 @@ import {
 
 import { PageHeader } from "@/components/page-header";
 import { SubmissionCard } from "@/components/submission-card";
-import { TaskOrderStatusBadge } from "@/components/status-badge";
+import {
+  HiddenBadge,
+  TaskOrderStatusBadge,
+} from "@/components/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/authz";
 import { formatInstantDate, workDateToday } from "@/lib/date";
@@ -18,7 +23,11 @@ import { getProjectForUser } from "@/lib/projects";
 import { listProjectSubmissions } from "@/lib/submissions";
 import { canManageTaskOrders, getTaskOrder } from "@/lib/task-orders";
 
-import { setTaskOrderStatusAction } from "../actions";
+import {
+  setTaskOrderHiddenAction,
+  setTaskOrderStatusAction,
+} from "../actions";
+import { DeleteTaskOrderButton } from "./delete-task-order-button";
 
 export const metadata: Metadata = {
   title: "Task order",
@@ -40,14 +49,19 @@ export default async function TaskOrderPage({
 
   if (!order) notFound();
 
+  const canManage = canManageTaskOrders(user, myRole);
+
+  // Hidden orders are invisible to members, including by direct URL.
+  if (order.hidden && !canManage) notFound();
+
   const submissions = await listProjectSubmissions(project.id, {
     taskOrderId: order.id,
   });
 
   const today = workDateToday();
   const isOpen = order.status === "OPEN";
-  const canManage = canManageTaskOrders(user, myRole);
-  const canSubmit = myRole !== null && project.status === "ACTIVE" && isOpen;
+  const canSubmit =
+    myRole !== null && project.status === "ACTIVE" && isOpen && !order.hidden;
 
   return (
     <div className="space-y-6">
@@ -58,6 +72,7 @@ export default async function TaskOrderPage({
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <TaskOrderStatusBadge status={order.status} />
+            {order.hidden ? <HiddenBadge /> : null}
             {canSubmit ? (
               <Link
                 href={`/projects/${project.slug}/submit?taskOrderId=${order.id}`}
@@ -117,25 +132,58 @@ export default async function TaskOrderPage({
           )}
 
           {canManage ? (
-            <form
-              action={setTaskOrderStatusAction}
-              className="mt-4 border-t border-border/70 pt-3"
-            >
-              <input type="hidden" name="taskOrderId" value={order.id} />
-              <input
-                type="hidden"
-                name="status"
-                value={isOpen ? "CLOSED" : "OPEN"}
-              />
-              <Button type="submit" variant="outline" size="sm">
-                {isOpen ? (
-                  <LockSimpleIcon aria-hidden="true" className="size-4" />
-                ) : (
-                  <LockSimpleOpenIcon aria-hidden="true" className="size-4" />
-                )}
-                {isOpen ? "Close task order" : "Reopen task order"}
-              </Button>
-            </form>
+            <div className="mt-4 space-y-3 border-t border-border/70 pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <form action={setTaskOrderStatusAction}>
+                  <input type="hidden" name="taskOrderId" value={order.id} />
+                  <input
+                    type="hidden"
+                    name="status"
+                    value={isOpen ? "CLOSED" : "OPEN"}
+                  />
+                  <Button type="submit" variant="outline" size="sm">
+                    {isOpen ? (
+                      <LockSimpleIcon aria-hidden="true" className="size-4" />
+                    ) : (
+                      <LockSimpleOpenIcon
+                        aria-hidden="true"
+                        className="size-4"
+                      />
+                    )}
+                    {isOpen ? "Close" : "Reopen"}
+                  </Button>
+                </form>
+
+                <form action={setTaskOrderHiddenAction}>
+                  <input type="hidden" name="taskOrderId" value={order.id} />
+                  <input
+                    type="hidden"
+                    name="hidden"
+                    value={order.hidden ? "false" : "true"}
+                  />
+                  <Button type="submit" variant="outline" size="sm">
+                    {order.hidden ? (
+                      <EyeIcon aria-hidden="true" className="size-4" />
+                    ) : (
+                      <EyeSlashIcon aria-hidden="true" className="size-4" />
+                    )}
+                    {order.hidden ? "Show to members" : "Hide from members"}
+                  </Button>
+                </form>
+
+                <DeleteTaskOrderButton
+                  taskOrderId={order.id}
+                  title={order.title}
+                  submissionCount={order.submissionCount}
+                />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Hidden orders disappear from the project page and the submit
+                form for members; leads and administrators still see them here.
+                Deleting keeps attached submissions in the project feed.
+              </p>
+            </div>
           ) : null}
         </section>
 
@@ -184,6 +232,7 @@ export default async function TaskOrderPage({
                   submission={submission}
                   today={today}
                   projectSlug={project.slug}
+                  showHiddenTaskOrders={canManage}
                 />
               ))}
             </ul>

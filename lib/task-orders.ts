@@ -12,6 +12,7 @@ export type TaskOrderSummary = {
   title: string;
   brief: string | null;
   status: TaskOrderStatus;
+  hidden: boolean;
   createdAt: Date;
   createdBy: { name: string };
   submissionCount: number;
@@ -19,8 +20,8 @@ export type TaskOrderSummary = {
 
 /**
  * One rule for the whole feature: project leads and global administrators
- * create and close orders; everyone on the project can read them and attach
- * work while they are open.
+ * create, close, hide and delete orders; everyone on the project can read them
+ * and attach work while they are open.
  */
 export function canManageTaskOrders(
   user: SessionUser,
@@ -29,9 +30,19 @@ export function canManageTaskOrders(
   return user.role === "ADMIN" || projectRole === "LEAD";
 }
 
-export async function listTaskOrders(projectId: string) {
+/**
+ * Hidden orders are invisible to ordinary members, so only managers get them in
+ * their lists.
+ */
+export async function listTaskOrders(
+  projectId: string,
+  options: { includeHidden?: boolean } = {},
+) {
   const rows = await db.taskOrder.findMany({
-    where: { projectId },
+    where: {
+      projectId,
+      ...(options.includeHidden ? {} : { hidden: false }),
+    },
     // Enum order is OPEN, CLOSED, so open orders bubble up.
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -39,6 +50,7 @@ export async function listTaskOrders(projectId: string) {
       title: true,
       brief: true,
       status: true,
+      hidden: true,
       createdAt: true,
       createdBy: { select: { name: true } },
       _count: { select: { submissions: true } },
@@ -51,6 +63,7 @@ export async function listTaskOrders(projectId: string) {
       title: row.title,
       brief: row.brief,
       status: row.status,
+      hidden: row.hidden,
       createdAt: row.createdAt,
       createdBy: row.createdBy,
       submissionCount: row._count.submissions,
@@ -66,6 +79,7 @@ export async function getTaskOrder(projectId: string, taskOrderId: string) {
       title: true,
       brief: true,
       status: true,
+      hidden: true,
       createdAt: true,
       createdBy: { select: { name: true } },
       _count: { select: { submissions: true } },
@@ -77,10 +91,10 @@ export async function getTaskOrder(projectId: string, taskOrderId: string) {
   return { ...order, submissionCount: order._count.submissions };
 }
 
-/** Only open orders can be attached to new work, so only those are offered. */
+/** Only open, visible orders can take new work — so only those are offered. */
 export async function listOpenTaskOrders(projectId: string) {
   return db.taskOrder.findMany({
-    where: { projectId, status: "OPEN" },
+    where: { projectId, status: "OPEN", hidden: false },
     orderBy: { createdAt: "desc" },
     select: { id: true, title: true },
   });

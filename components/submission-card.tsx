@@ -3,28 +3,23 @@ import { ClipboardTextIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { LinkChips } from "@/components/link-chips";
 import { SubmissionStatusBadge } from "@/components/status-badge";
+import { UserAvatar } from "@/components/user-avatar";
 import { formatInstantDate, formatTime } from "@/lib/date";
 import type { FeedSubmission } from "@/lib/submissions";
 import { cn } from "@/lib/utils";
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
 
 /** One submission, shared by the project feed and a task order's own list. */
 export function SubmissionCard({
   submission,
   today,
   projectSlug,
+  showHiddenTaskOrders = false,
 }: {
   submission: FeedSubmission;
   today: string;
   projectSlug: string;
+  /** Managers see the chip for hidden orders; members must not. */
+  showHiddenTaskOrders?: boolean;
 }) {
   const loggedAt =
     submission.workDate === today
@@ -34,12 +29,11 @@ export function SubmissionCard({
   return (
     <li className="rounded-lg border border-border/70 p-3">
       <div className="flex items-start gap-2.5">
-        <span
-          aria-hidden="true"
-          className="grid size-7 shrink-0 place-items-center rounded-full bg-muted font-mono text-[10px] font-medium"
-        >
-          {initials(submission.author.name)}
-        </span>
+        <UserAvatar
+          name={submission.author.name}
+          image={submission.author.image}
+          size="sm"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -52,7 +46,8 @@ export function SubmissionCard({
             <SubmissionStatusBadge status={submission.status} />
           </div>
 
-          {submission.taskOrder ? (
+          {submission.taskOrder &&
+          (!submission.taskOrder.hidden || showHiddenTaskOrders) ? (
             <Link
               href={`/projects/${projectSlug}/task-orders/${submission.taskOrder.id}`}
               className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-md bg-info/10 px-2 py-1 text-[11px] text-info transition-colors hover:bg-info/20"
@@ -71,6 +66,29 @@ export function SubmissionCard({
           ) : null}
 
           <LinkChips links={submission.links} />
+
+          {submission.images.length > 0 ? (
+            <ul className="mt-2 grid max-w-md grid-cols-3 gap-1.5 sm:grid-cols-4">
+              {submission.images.map((image) => (
+                <li key={image.id}>
+                  <a
+                    href={`/api/media/${image.key}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block aspect-square overflow-hidden rounded-md border border-border/70"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/media/${image.key}`}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover transition-transform duration-200 hover:scale-105"
+                    />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {submission.reviewNote ? (
             <p

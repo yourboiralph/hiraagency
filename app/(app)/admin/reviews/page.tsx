@@ -20,7 +20,11 @@ function ReviewCard({ item }: { item: ReviewItem }) {
   return (
     <li className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
       <div className="flex flex-wrap items-start gap-3">
-        <ProjectMark name={item.project.name} color={item.project.color} />
+        <ProjectMark
+          name={item.project.name}
+          color={item.project.color}
+          image={item.project.image}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -49,6 +53,29 @@ function ReviewCard({ item }: { item: ReviewItem }) {
           ) : null}
 
           <LinkChips links={item.links} />
+
+          {item.images.length > 0 ? (
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {item.images.map((image) => (
+                <li key={image.id}>
+                  <a
+                    href={`/api/media/${image.key}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block size-16 overflow-hidden rounded-md border border-border/70"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/media/${image.key}`}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover"
+                    />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
 
         <div className="text-right">

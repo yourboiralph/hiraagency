@@ -25,10 +25,11 @@ export type FeedSubmission = {
   workDate: WorkDate;
   createdAt: Date;
   reviewedAt: Date | null;
-  author: { id: string; name: string };
+  author: { id: string; name: string; image: string | null };
   reviewer: { name: string } | null;
-  taskOrder: { id: string; title: string } | null;
+  taskOrder: { id: string; title: string; hidden: boolean } | null;
   links: FeedLink[];
+  images: { id: string; key: string }[];
 };
 
 export async function listProjectSubmissions(
@@ -51,12 +52,16 @@ export async function listProjectSubmissions(
       workDate: true,
       createdAt: true,
       reviewedAt: true,
-      author: { select: { id: true, name: true } },
+      author: { select: { id: true, name: true, image: true } },
       reviewer: { select: { name: true } },
-      taskOrder: { select: { id: true, title: true } },
+      taskOrder: { select: { id: true, title: true, hidden: true } },
       links: {
         orderBy: { position: "asc" },
         select: { id: true, url: true, platform: true, label: true },
+      },
+      images: {
+        orderBy: { position: "asc" },
+        select: { id: true, key: true },
       },
     },
   });
@@ -80,7 +85,7 @@ export async function listMySubmissionsForDate(
       title: true,
       status: true,
       createdAt: true,
-      project: { select: { name: true, slug: true, color: true } },
+      project: { select: { name: true, slug: true, color: true, image: true } },
       _count: { select: { links: true } },
     },
   });

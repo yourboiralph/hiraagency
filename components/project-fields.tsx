@@ -5,6 +5,7 @@ import { useId } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUploader } from "@/components/image-uploader";
 import { cn } from "@/lib/utils";
 import { PROJECT_COLORS } from "@/lib/validation/project";
 
@@ -17,7 +18,12 @@ export function ProjectFields({
   defaults,
 }: {
   state: ProjectFieldsState;
-  defaults?: { name?: string; description?: string | null; color?: string };
+  defaults?: {
+    name?: string;
+    description?: string | null;
+    color?: string;
+    image?: string | null;
+  };
 }) {
   const nameId = useId();
   const descriptionId = useId();
@@ -78,6 +84,14 @@ export function ProjectFields({
           </p>
         )}
       </div>
+
+      <ImageUploader
+        kind="project"
+        name="image"
+        label="Project picture"
+        hint="Shown instead of the colored initial on cards and the project page. JPEG, PNG or WebP up to 5 MB."
+        initialKey={defaults?.image ?? null}
+      />
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Color</legend>

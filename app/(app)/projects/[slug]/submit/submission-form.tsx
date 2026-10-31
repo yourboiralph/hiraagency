@@ -10,6 +10,7 @@ import {
 
 import { FormErrorSummary } from "@/components/form-error-summary";
 import { FormSelect } from "@/components/form-select";
+import { SubmissionImagePicker } from "@/components/submission-image-picker";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -269,6 +270,8 @@ export function SubmissionForm({
           Add another link
         </Button>
       </fieldset>
+
+      <SubmissionImagePicker />
 
       <div className="space-y-2">
         <Label htmlFor={`${prefix}-notes`}>

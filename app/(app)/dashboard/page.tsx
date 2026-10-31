@@ -179,6 +179,7 @@ export default async function DashboardPage() {
                       <ProjectMark
                         name={submission.project.name}
                         color={submission.project.color}
+                        image={submission.project.image}
                         size="sm"
                       />
                       <span className="min-w-0 flex-1">
@@ -238,6 +239,7 @@ export default async function DashboardPage() {
                       <ProjectMark
                         name={project.name}
                         color={project.color}
+                        image={project.image}
                         size="sm"
                       />
                       <span className="min-w-0 flex-1 truncate text-sm">

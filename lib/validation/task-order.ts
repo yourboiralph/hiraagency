@@ -14,7 +14,14 @@ export const taskOrderSchema = z.object({
     .transform((value) => (value.length > 0 ? value : null)),
 });
 
-export const taskOrderStatusSchema = z.object({
+export const taskOrderIdSchema = z.object({
   taskOrderId: z.string().min(1, "Missing task order"),
+});
+
+export const taskOrderStatusSchema = taskOrderIdSchema.extend({
   status: z.enum(["OPEN", "CLOSED"]),
+});
+
+export const taskOrderVisibilitySchema = taskOrderIdSchema.extend({
+  hidden: z.enum(["true", "false"]),
 });

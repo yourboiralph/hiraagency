@@ -20,6 +20,7 @@ export function ProjectDetailsForm({
     name: string;
     description: string | null;
     color: string;
+    image: string | null;
   };
 }) {
   const [state, formAction, isPending] = useActionState(

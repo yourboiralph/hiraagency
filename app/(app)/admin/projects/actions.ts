@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/authz";
 import { db } from "@/lib/db";
 import { createUniqueProjectSlug } from "@/lib/projects";
+import { deleteObject, verifyUploadedImage } from "@/lib/storage";
 import { fieldErrorsOf } from "@/lib/validation/errors";
 import {
   memberSchema,
@@ -54,6 +55,16 @@ export async function createProjectAction(
     return { fieldErrors: fieldErrorsOf(parsed.error) };
   }
 
+  const image = String(formData.get("image") ?? "").trim();
+  if (image) {
+    const stored = await verifyUploadedImage(image, `projects/${admin.id}`);
+    if (!stored) {
+      return {
+        fieldErrors: { image: "Upload the picture again before saving." },
+      };
+    }
+  }
+
   let created: { id: string; name: string; slug: string };
 
   try {
@@ -64,6 +75,7 @@ export async function createProjectAction(
         name: parsed.data.name,
         description: parsed.data.description,
         color: parsed.data.color,
+        image: image || null,
         slug,
         createdById: admin.id,
       },
@@ -81,7 +93,7 @@ export async function updateProjectAction(
   _previous: ProjectFormState,
   formData: FormData,
 ): Promise<ProjectFormState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = projectSchema.safeParse({
     name: formData.get("name"),
@@ -93,9 +105,20 @@ export async function updateProjectAction(
   if (!id.success) return { formError: "Missing project." };
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
 
+  const image = String(formData.get("image") ?? "").trim();
+
+  if (image) {
+    const stored = await verifyUploadedImage(image, `projects/${admin.id}`);
+    if (!stored) {
+      return {
+        fieldErrors: { image: "Upload the picture again before saving." },
+      };
+    }
+  }
+
   const existing = await db.project.findUnique({
     where: { id: id.data.projectId },
-    select: { id: true },
+    select: { id: true, image: true },
   });
 
   if (!existing) return { formError: "That project no longer exists." };
@@ -108,10 +131,17 @@ export async function updateProjectAction(
         name: parsed.data.name,
         description: parsed.data.description,
         color: parsed.data.color,
+        image: image || null,
       },
     });
   } catch {
     return { formError: "The changes could not be saved. Try again." };
+  }
+
+  // Best effort: drop the replaced picture so the bucket does not accumulate
+  // abandoned objects.
+  if (existing.image && existing.image !== image) {
+    await deleteObject(existing.image);
   }
 
   revalidateProjectSurfaces(existing.id);

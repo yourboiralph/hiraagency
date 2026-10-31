@@ -7,16 +7,19 @@ const SIZES = {
 } as const;
 
 /**
- * The project's identity chip. Tinted with the project color instead of filled:
- * a saturated block of color at every row would fight the status colors.
+ * The project's identity chip: its picture when one is set, otherwise the
+ * colored initial. Tinted rather than filled so a row of projects does not
+ * fight the status colors.
  */
 export function ProjectMark({
   name,
   color,
+  image = null,
   size = "md",
 }: {
   name: string;
   color: string;
+  image?: string | null;
   size?: keyof typeof SIZES;
 }) {
   return (
@@ -24,11 +27,21 @@ export function ProjectMark({
       aria-hidden="true"
       style={{ backgroundColor: `${color}1F`, color }}
       className={cn(
-        "grid shrink-0 place-items-center font-mono font-semibold",
+        "grid shrink-0 place-items-center overflow-hidden font-mono font-semibold",
         SIZES[size],
       )}
     >
-      {name.slice(0, 1).toUpperCase()}
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/media/${image}`}
+          alt=""
+          loading="lazy"
+          className="size-full object-cover"
+        />
+      ) : (
+        name.slice(0, 1).toUpperCase()
+      )}
     </span>
   );
 }

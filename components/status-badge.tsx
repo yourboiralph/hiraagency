@@ -95,3 +95,14 @@ export function TaskOrderStatusBadge({ status }: { status: TaskOrderStatus }) {
     </Badge>
   );
 }
+
+export function HiddenBadge() {
+  return (
+    <Badge
+      variant="outline"
+      className="border-warning/30 bg-warning/10 text-warning"
+    >
+      Hidden
+    </Badge>
+  );
+}

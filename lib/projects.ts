@@ -15,6 +15,7 @@ export type ProjectSummary = {
   name: string;
   slug: string;
   description: string | null;
+  image: string | null;
   color: string;
   status: ProjectStatus;
   memberCount: number;
@@ -28,6 +29,7 @@ export type ProjectMemberView = {
   userId: string;
   name: string;
   email: string;
+  image: string | null;
   role: ProjectRole;
   addedAt: Date;
 };
@@ -50,6 +52,7 @@ export async function listProjects(
       name: true,
       slug: true,
       description: true,
+      image: true,
       color: true,
       status: true,
       _count: { select: { members: true, submissions: true } },
@@ -68,6 +71,7 @@ export async function listProjects(
     name: project.name,
     slug: project.slug,
     description: project.description,
+    image: project.image,
     color: project.color,
     status: project.status,
     memberCount: project._count.members,
@@ -85,6 +89,7 @@ export async function getProjectForUser(slug: string, user: SessionUser) {
       name: true,
       slug: true,
       description: true,
+      image: true,
       color: true,
       status: true,
       createdAt: true,
@@ -94,7 +99,7 @@ export async function getProjectForUser(slug: string, user: SessionUser) {
         select: {
           role: true,
           createdAt: true,
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true, image: true } },
         },
       },
     },
@@ -116,6 +121,7 @@ export async function getProjectForUser(slug: string, user: SessionUser) {
         userId: member.user.id,
         name: member.user.name,
         email: member.user.email,
+        image: member.user.image,
         role: member.role,
         addedAt: member.createdAt,
       }),
@@ -154,6 +160,7 @@ export async function listAdminProjects() {
       name: true,
       slug: true,
       description: true,
+      image: true,
       color: true,
       status: true,
       updatedAt: true,
@@ -176,6 +183,7 @@ export async function getAdminProject(id: string) {
       name: true,
       slug: true,
       description: true,
+      image: true,
       color: true,
       status: true,
       createdAt: true,
@@ -187,7 +195,15 @@ export async function getAdminProject(id: string) {
         select: {
           role: true,
           createdAt: true,
-          user: { select: { id: true, name: true, email: true, isActive: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              isActive: true,
+            },
+          },
         },
       },
     },
@@ -200,6 +216,7 @@ export async function getAdminProject(id: string) {
       userId: member.user.id,
       name: member.user.name,
       email: member.user.email,
+      image: member.user.image,
       role: member.role,
       addedAt: member.createdAt,
       isActive: member.user.isActive,
