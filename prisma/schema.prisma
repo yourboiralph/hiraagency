@@ -33,6 +33,7 @@ enum SubmissionStatus {
   PENDING
   APPROVED
   NEEDS_REVISION
+  REJECTED
 }
 
 enum TaskOrderStatus {

@@ -22,9 +22,16 @@ export type ReviewItem = {
 };
 
 /** Oldest first: the queue is worked front to back, not newest first. */
-export async function listPendingReviews(take = 50): Promise<ReviewItem[]> {
+export async function listPendingReviews(
+  options: { projectIds?: string[] | null; take?: number } = {},
+): Promise<ReviewItem[]> {
+  const { projectIds = null, take = 50 } = options;
+
   const rows = await db.submission.findMany({
-    where: { status: "PENDING" },
+    where: {
+      status: "PENDING",
+      ...(projectIds ? { projectId: { in: projectIds } } : {}),
+    },
     orderBy: { createdAt: "asc" },
     take,
     select: {

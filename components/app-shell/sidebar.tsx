@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCheckIcon,
+  ClipboardTextIcon,
   FolderOpenIcon,
   SignOutIcon,
   SquaresFourIcon,
@@ -21,6 +22,7 @@ type NavUser = {
   email: string;
   image: string | null;
   role: "ADMIN" | "MEMBER";
+  canReview: boolean;
 };
 
 type NavItem = {
@@ -28,12 +30,19 @@ type NavItem = {
   label: string;
   icon: Icon;
   adminOnly?: boolean;
+  reviewerOnly?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: SquaresFourIcon },
   { href: "/projects", label: "Projects", icon: FolderOpenIcon },
-  { href: "/me", label: "My activity", icon: CalendarCheckIcon },
+  { href: "/me", label: "My profile", icon: CalendarCheckIcon },
+  {
+    href: "/reviews",
+    label: "Reviews",
+    icon: ClipboardTextIcon,
+    reviewerOnly: true,
+  },
   { href: "/admin", label: "Admin", icon: ShieldCheckIcon, adminOnly: true },
 ];
 
@@ -108,7 +117,11 @@ function SignOutButton({ compact = false }: { compact?: boolean }) {
 
 export function AppSidebar({ user }: { user: NavUser }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter((item) => !item.adminOnly || user.role === "ADMIN");
+  const items = NAV_ITEMS.filter(
+    (item) =>
+      (!item.adminOnly || user.role === "ADMIN") &&
+      (!item.reviewerOnly || user.canReview),
+  );
 
   return (
     <>

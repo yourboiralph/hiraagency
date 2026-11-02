@@ -97,7 +97,7 @@ datasource db {
 enum Role             { ADMIN MEMBER }
 enum ProjectRole      { LEAD MEMBER }
 enum ProjectStatus    { ACTIVE ARCHIVED }
-enum SubmissionStatus { PENDING APPROVED NEEDS_REVISION }
+enum SubmissionStatus { PENDING APPROVED NEEDS_REVISION REJECTED }
 enum TaskOrderStatus  { OPEN CLOSED }
 
 model User {
@@ -369,6 +369,9 @@ These differ from the original assumptions and are now the real state of the rep
 | **Private media** | `/api/media/[...key]` requires a session. Keys are `<kind>/<userId>/<uuid>.<ext>`; saving re-checks the prefix and calls `HeadObject` | a leaked URL is useless without a session, and a member cannot attach somebody else's upload |
 | **Upload limits** | Avatars 2 MB; project covers and each submission picture 5 MB; up to 6 pictures per submission; JPEG, PNG or WebP | enforced in the uploader and again on save |
 | **Image fallbacks** | Project covers fall back to the colored initial, avatars to initials | records without images keep rendering exactly as before |
+| **Review access** | `requireReviewer`: admins review everything; leads review only projects where they are LEAD. Every action re-checks the submission's project | scoping is enforced at the write, not only by what the queue shows |
+| **Rejection** | New final status `REJECTED` with a required reason (3-500 chars). All three decisions run `updateMany` on `status: "PENDING"` | final by design; no undo path, and two reviewers cannot race |
+| **Rejected task orders** | A rejected submission blocks that member from attaching new work to the same order; other submissions that day are unaffected | matches the rule: no more work for that order, still free to work that day |
 | **Bucket CORS** | The Neon bucket must allow browser `PUT`/`GET`/`HEAD` from the app origins with `Content-Type` allowed | presigned uploads are cross-origin; without CORS the upload fails in the browser |
 
 ---
@@ -466,13 +469,14 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 - `/projects/[slug]/task-orders/[id]` — brief, open/closed state, work attached to the order
 - `/projects/[slug]/submit` — date picker (≤ today, ≥ -7d), title, optional task order, N links, up to 6 pictures, notes
 - `/me` — profile picture and account; check-in/submission history still pending
+- `/reviews` — visible to admins and project leads; a lead sees only projects they lead. Approve / request revision / reject with a reason
 
 ### Admin
 - `/admin` — today's attendance (checked in n/m, missing list with times), entry points to projects and people
 - `/admin/projects` — list + create
 - `/admin/projects/[id]` — details, members, archive/restore (details and members share one screen on purpose)
 - `/admin/users` — create user, issue temp password, reset password, deactivate
-- `/admin/reviews` — pending queue, approve / needs-revision + note
+- `/admin/reviews` — legacy path, redirects to `/reviews`
 
 ---
 
@@ -488,6 +492,7 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 | 5 | Review | ✅ Admin approves / requests revision; member sees status |
 | 5b | Task orders | ✅ Leads/admins post briefs; members attach work; closing blocks new submissions |
 | 5c | Media | ✅ Submission pictures, project covers and avatars on Neon Object Storage |
+| 5d | Rejection | ✅ Leads review their projects; reject with a reason; rejected orders close to that member |
 | 6 | Polish | Heatmap, empty states, a11y pass, mobile, dark/light, seed data |
 
 ---

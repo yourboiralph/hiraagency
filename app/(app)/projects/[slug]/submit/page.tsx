@@ -35,7 +35,7 @@ export default async function SubmitWorkPage({
 
   // Preselect only when the id is one of this project's open orders: the query
   // string is user input.
-  const openTaskOrders = await listOpenTaskOrders(project.id);
+  const openTaskOrders = await listOpenTaskOrders(project.id, user.id);
   const initialTaskOrderId = openTaskOrders.some(
     (order) => order.id === taskOrderId,
   )

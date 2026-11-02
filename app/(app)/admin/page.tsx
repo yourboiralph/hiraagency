@@ -186,7 +186,7 @@ export default async function AdminPage() {
           meta={`${roster.total} active · ${peopleCount} total`}
         />
         <SectionLink
-          href="/admin/reviews"
+          href="/reviews"
           icon={<ClipboardTextIcon aria-hidden="true" className="size-5" />}
           title="Reviews"
           description="Approve submitted work or send it back with a note."

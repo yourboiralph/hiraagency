@@ -70,6 +70,17 @@ export function SubmissionStatusBadge({
     );
   }
 
+  if (status === "REJECTED") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-destructive/50 bg-destructive/15 text-destructive"
+      >
+        Rejected
+      </Badge>
+    );
+  }
+
   return (
     <Badge
       variant="outline"

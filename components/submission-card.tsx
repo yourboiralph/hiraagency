@@ -26,6 +26,13 @@ export function SubmissionCard({
       ? formatTime(submission.createdAt)
       : formatInstantDate(submission.createdAt);
 
+  const decision =
+    submission.status === "APPROVED"
+      ? "Approved"
+      : submission.status === "REJECTED"
+        ? "Rejected"
+        : "Sent back";
+
   return (
     <li className="rounded-lg border border-border/70 p-3">
       <div className="flex items-start gap-2.5">
@@ -94,9 +101,9 @@ export function SubmissionCard({
             <p
               className={cn(
                 "mt-2 rounded-md px-2 py-1.5 text-xs [overflow-wrap:anywhere]",
-                submission.status === "NEEDS_REVISION"
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-muted/50 text-muted-foreground",
+                submission.status === "APPROVED"
+                  ? "bg-muted/50 text-muted-foreground"
+                  : "bg-destructive/10 text-destructive",
               )}
             >
               <span className="font-medium">Reviewer:</span>{" "}
@@ -106,8 +113,7 @@ export function SubmissionCard({
 
           {submission.status !== "PENDING" ? (
             <p className="mt-2 text-[11px] text-muted-foreground">
-              {submission.status === "APPROVED" ? "Approved" : "Sent back"} by{" "}
-              {submission.reviewer?.name ?? "an administrator"}
+              {decision} by {submission.reviewer?.name ?? "an administrator"}
               {submission.reviewedAt
                 ? ` · ${formatInstantDate(submission.reviewedAt)}`
                 : ""}

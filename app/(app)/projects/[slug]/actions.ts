@@ -80,6 +80,23 @@ export async function createSubmissionAction(
       };
     }
 
+    // Rejection is final for this member on this order, but not for their day.
+    const rejectedBefore = await db.submission.findFirst({
+      where: {
+        taskOrderId: taskOrder.id,
+        authorId: user.id,
+        status: "REJECTED",
+      },
+      select: { id: true },
+    });
+
+    if (rejectedBefore) {
+      return {
+        formError:
+          "Your work for this task order was rejected. A lead can post a new order.",
+      };
+    }
+
     taskOrderId = taskOrder.id;
   }
 

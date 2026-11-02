@@ -80,6 +80,40 @@ export async function requireAdmin(): Promise<SessionUser> {
 }
 
 /**
+ * Reviews are open to global administrators and to project leads. A lead's
+ * scope is the list of projects they lead; `null` means "everything".
+ */
+export async function requireReviewer(): Promise<{
+  user: SessionUser;
+  projectIds: string[] | null;
+}> {
+  const user = await requireUser();
+
+  if (user.role === "ADMIN") return { user, projectIds: null };
+
+  const memberships = await db.projectMember.findMany({
+    where: { userId: user.id, role: "LEAD" },
+    select: { projectId: true },
+  });
+
+  if (memberships.length === 0) redirect("/dashboard");
+
+  return { user, projectIds: memberships.map((member) => member.projectId) };
+}
+
+/** Cheap check for showing the Reviews link without running the page. */
+export async function canReview(user: SessionUser): Promise<boolean> {
+  if (user.role === "ADMIN") return true;
+
+  const lead = await db.projectMember.findFirst({
+    where: { userId: user.id, role: "LEAD" },
+    select: { projectId: true },
+  });
+
+  return Boolean(lead);
+}
+
+/**
  * Admin sees every project; members see only the ones they were added to.
  * Missing and forbidden are deliberately indistinguishable.
  */

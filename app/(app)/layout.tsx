@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/app-shell/sidebar";
-import { requireUser } from "@/lib/authz";
+import { canReview, requireUser } from "@/lib/authz";
 
 export default async function AppLayout({
   children,
@@ -7,6 +7,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+  const showReviews = await canReview(user);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -16,6 +17,7 @@ export default async function AppLayout({
           email: user.email,
           image: user.image,
           role: user.role,
+          canReview: showReviews,
         }}
       />
       <div className="md:pl-60">

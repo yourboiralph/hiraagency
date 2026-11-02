@@ -92,9 +92,19 @@ export async function getTaskOrder(projectId: string, taskOrderId: string) {
 }
 
 /** Only open, visible orders can take new work — so only those are offered. */
-export async function listOpenTaskOrders(projectId: string) {
+export async function listOpenTaskOrders(projectId: string, viewerId: string) {
   return db.taskOrder.findMany({
-    where: { projectId, status: "OPEN", hidden: false },
+    where: {
+      projectId,
+      status: "OPEN",
+      hidden: false,
+      // A rejected submission closes that order for this member only.
+      NOT: {
+        submissions: {
+          some: { authorId: viewerId, status: "REJECTED" },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
     select: { id: true, title: true },
   });

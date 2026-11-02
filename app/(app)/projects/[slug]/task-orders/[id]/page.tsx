@@ -8,6 +8,7 @@ import {
   LockSimpleIcon,
   LockSimpleOpenIcon,
   PlusIcon,
+  WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { PageHeader } from "@/components/page-header";
@@ -19,6 +20,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/authz";
 import { formatInstantDate, workDateToday } from "@/lib/date";
+import { db } from "@/lib/db";
 import { getProjectForUser } from "@/lib/projects";
 import { listProjectSubmissions } from "@/lib/submissions";
 import { canManageTaskOrders, getTaskOrder } from "@/lib/task-orders";
@@ -58,10 +60,23 @@ export default async function TaskOrderPage({
     taskOrderId: order.id,
   });
 
+  // Rejection is final for this member on this order.
+  const rejectedByViewer = await db.submission.count({
+    where: {
+      taskOrderId: order.id,
+      authorId: user.id,
+      status: "REJECTED",
+    },
+  });
+
   const today = workDateToday();
   const isOpen = order.status === "OPEN";
   const canSubmit =
-    myRole !== null && project.status === "ACTIVE" && isOpen && !order.hidden;
+    myRole !== null &&
+    project.status === "ACTIVE" &&
+    isOpen &&
+    !order.hidden &&
+    rejectedByViewer === 0;
 
   return (
     <div className="space-y-6">
@@ -97,6 +112,24 @@ export default async function TaskOrderPage({
             className="mt-0.5 size-4 shrink-0 text-success"
           />
           <p>Work submitted. An administrator will review it.</p>
+        </div>
+      ) : null}
+
+      {rejectedByViewer > 0 ? (
+        <div
+          role="status"
+          className="flex items-start gap-2.5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm"
+        >
+          <WarningCircleIcon
+            weight="fill"
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0 text-destructive"
+          />
+          <p>
+            Your work for this task order was rejected. Ask a lead to post a new
+            order if the work needs another attempt — you can still submit
+            other work.
+          </p>
         </div>
       ) : null}
 
