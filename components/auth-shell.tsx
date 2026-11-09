@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { HiraLogo } from "@/components/hira-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 
 function Brand() {
   return (
@@ -15,6 +16,33 @@ function Brand() {
           Workspace
         </span>
       </span>
+    </div>
+  );
+}
+
+function StatPill({
+  label,
+  value,
+  tone,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-white/15 bg-[#0d1c42] shadow-xl",
+        compact ? "px-2.5 py-2" : "px-3 py-2.5",
+      )}
+    >
+      <p className="text-[12px] font-medium text-white/50">{label}</p>
+      <p className="mt-1 flex items-center gap-1.5 text-[14px] font-medium text-white">
+        <span className={cn("size-1.5 shrink-0 rounded-full", tone)} />
+        {value}
+      </p>
     </div>
   );
 }
@@ -40,22 +68,25 @@ export function AuthShell({
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#010736] to-transparent" />
         </div>
 
-        <div className="animate-rise relative z-10 flex items-center justify-between gap-4">
+        <div className="animate-rise relative z-20 flex items-center justify-between gap-4">
           <p className="text-[13px] font-medium text-white/80">Hira Agency</p>
           <p className="font-mono text-xs text-white/60">Asia/Manila</p>
         </div>
 
-        <div className="relative z-10 mt-12">
-          <h2
-            className="animate-rise text-balance text-5xl font-medium leading-[0.95] tracking-[-0.045em] md:text-6xl"
-            style={{ animationDelay: "60ms" }}
-          >
-            EDIT. EARN. ENJOY
+        <div className="relative z-10 mt-8 flex-1">
+          <h2 className="pointer-events-none absolute inset-x-0 top-0 z-0 select-none text-center font-heading text-[clamp(4rem,11vw,8rem)] font-semibold uppercase leading-[0.76] tracking-[-0.07em]">
+            <span className="block bg-gradient-to-b from-white via-white/80 to-white/20 bg-clip-text text-transparent">
+              EDIT.
+            </span>
+            <span className="block bg-gradient-to-b from-white/90 via-white/55 to-white/10 bg-clip-text text-transparent">
+              EARN.
+            </span>
+            <span className="block bg-gradient-to-b from-white/70 via-white/30 to-transparent bg-clip-text text-transparent">
+              ENJOY
+            </span>
           </h2>
-        </div>
 
-        <div className="relative z-10 mt-6 flex-1">
-          <div className="relative mx-auto flex w-full max-w-[780px] items-end justify-center">
+          <div className="relative z-10 flex min-h-[440px] items-end justify-center pt-24 lg:h-full lg:min-h-0">
             <div
               aria-hidden="true"
               className="absolute bottom-8 left-1/2 h-24 w-[68%] -translate-x-1/2 rounded-[100%] bg-[#22396f]/50 blur-3xl"
@@ -67,10 +98,44 @@ export function AuthShell({
               height={1499}
               sizes="(min-width: 1024px) 36vw, 100vw"
               priority
-              className="animate-rise relative z-10 h-auto max-h-[320px] w-auto max-w-full object-contain drop-shadow-[0_28px_50px_rgba(0,0,0,0.45)] lg:max-h-[58vh]"
+              className="animate-rise relative z-10 h-auto max-h-[300px] w-auto max-w-full object-contain drop-shadow-[0_28px_50px_rgba(0,0,0,0.45)] lg:max-h-[58vh]"
               style={{ animationDelay: "180ms" }}
             />
+          </div>
 
+          <div className="absolute left-0 top-10 z-20 hidden lg:block">
+            <StatPill label="Check-in" value="09:12" tone="bg-[#7ee2b8]" />
+          </div>
+          <div className="absolute right-0 top-28 z-20 hidden lg:block">
+            <StatPill label="Review" value="3 waiting" tone="bg-[#ffd166]" />
+          </div>
+          <div className="absolute bottom-12 left-4 z-20 hidden lg:block">
+            <StatPill
+              label="Submission"
+              value="Approved"
+              tone="bg-[#7ee2b8]"
+            />
+          </div>
+
+          <div className="relative z-20 mt-4 grid grid-cols-3 gap-2 lg:hidden">
+            <StatPill
+              compact
+              label="Check-in"
+              value="09:12"
+              tone="bg-[#7ee2b8]"
+            />
+            <StatPill
+              compact
+              label="Submission"
+              value="Approved"
+              tone="bg-[#7ee2b8]"
+            />
+            <StatPill
+              compact
+              label="Review"
+              value="3 waiting"
+              tone="bg-[#ffd166]"
+            />
           </div>
         </div>
 
