@@ -1,8 +1,4 @@
-import {
-  CheckCircleIcon,
-  ClockCountdownIcon,
-  FolderOpenIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
 
 import { HiraLogo } from "@/components/hira-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -23,30 +19,6 @@ function Brand() {
   );
 }
 
-const PREVIEWS = [
-  {
-    label: "Check-in",
-    value: "09:12",
-    meta: "On time",
-    icon: CheckCircleIcon,
-    tone: "text-[#067647]",
-  },
-  {
-    label: "Submission",
-    value: "Homepage refresh",
-    meta: "Approved",
-    icon: FolderOpenIcon,
-    tone: "text-[#067647]",
-  },
-  {
-    label: "Review queue",
-    value: "3 waiting",
-    meta: "2 projects",
-    icon: ClockCountdownIcon,
-    tone: "text-[#b54708]",
-  },
-];
-
 export function AuthShell({
   title,
   description,
@@ -60,58 +32,48 @@ export function AuthShell({
 }) {
   return (
     <main className="grid min-h-dvh lg:grid-cols-[1.05fr_0.95fr]">
-      {/* The product itself, as live HTML: check-in, submission, review. */}
-      <section className="order-2 flex flex-col justify-between gap-12 border-t border-border bg-[#010736] px-6 py-10 text-white lg:order-1 lg:border-t-0 lg:border-r lg:border-white/15 lg:p-12">
-        <div className="animate-rise flex items-center justify-between gap-4">
-          <p className="font-mono text-xs text-white/70">
-            Internal agency operations
-          </p>
-          <p className="font-mono text-xs text-white/70">Asia/Manila</p>
+      {/* The creative work the workspace supports. */}
+      <section className="relative order-2 flex flex-col justify-between overflow-hidden border-t border-border bg-[#010736] px-6 py-10 text-white lg:order-1 lg:min-h-dvh lg:border-t-0 lg:border-r lg:border-white/15 lg:p-12">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(120%_85%_at_72%_62%,rgba(34,57,111,0.6),transparent_62%)]" />
+          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#010736] to-transparent" />
         </div>
 
-        <div className="max-w-xl">
+        <div className="animate-rise relative z-10 flex items-center justify-between gap-4">
+          <p className="text-[13px] font-medium text-white/80">Hira Agency</p>
+          <p className="font-mono text-xs text-white/60">Asia/Manila</p>
+        </div>
+
+        <div className="relative z-10 mt-12">
           <h2
-            className="animate-rise text-3xl font-medium leading-[1.05] tracking-[-0.03em] md:text-[2.75rem]"
+            className="animate-rise text-balance text-5xl font-medium leading-[0.95] tracking-[-0.045em] md:text-6xl"
             style={{ animationDelay: "60ms" }}
           >
-            Check in, submit links, review the work.
+            EDIT. EARN. ENJOY
           </h2>
-          <p
-            className="animate-rise mt-5 max-w-md text-base leading-relaxed text-white/75"
-            style={{ animationDelay: "120ms" }}
-          >
-            One place for the workday, the links each person produced, and the
-            decisions the leads make.
-          </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          {PREVIEWS.map((preview, index) => {
-            const Icon = preview.icon;
-            return (
-              <div
-                key={preview.label}
-                className="animate-rise rounded-xl bg-white p-4 text-[#010736]"
-                style={{ animationDelay: `${180 + index * 60}ms` }}
-              >
-                <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#22396f]">
-                  <Icon
-                    aria-hidden="true"
-                    weight="fill"
-                    className={`size-3.5 ${preview.tone}`}
-                  />
-                  {preview.label}
-                </div>
-                <p className="mt-3 truncate text-[15px] font-medium">
-                  {preview.value}
-                </p>
-                <p className="mt-1 font-mono text-xs text-[#22396f]">
-                  {preview.meta}
-                </p>
-              </div>
-            );
-          })}
+        <div className="relative z-10 mt-6 flex-1">
+          <div className="relative mx-auto flex w-full max-w-[780px] items-end justify-center">
+            <div
+              aria-hidden="true"
+              className="absolute bottom-8 left-1/2 h-24 w-[68%] -translate-x-1/2 rounded-[100%] bg-[#22396f]/50 blur-3xl"
+            />
+            <Image
+              src="/minecraft-creeper.webp"
+              alt="A Creeper editing a Minecraft video at a gaming desk"
+              width={1600}
+              height={1499}
+              sizes="(min-width: 1024px) 36vw, 100vw"
+              priority
+              className="animate-rise relative z-10 h-auto max-h-[320px] w-auto max-w-full object-contain drop-shadow-[0_28px_50px_rgba(0,0,0,0.45)] lg:max-h-[58vh]"
+              style={{ animationDelay: "180ms" }}
+            />
+
+          </div>
         </div>
+
       </section>
 
       {/* Sign-in */}
