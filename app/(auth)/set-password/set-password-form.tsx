@@ -35,6 +35,7 @@ export function SetPasswordForm() {
           name="password"
           type="password"
           autoComplete="new-password"
+          autoFocus
           required
           aria-invalid={Boolean(state.fieldErrors?.password)}
           aria-describedby={
