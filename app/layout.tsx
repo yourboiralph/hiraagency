@@ -28,6 +28,11 @@ export const metadata: Metadata = {
     template: "%s · HiraAgency",
   },
   description: "Daily check-ins and project work submissions for the Hira team.",
+  icons: {
+    icon: "/hira-logo.svg",
+    shortcut: "/hira-logo.svg",
+    apple: "/hira-logo.svg",
+  },
   robots: { index: false, follow: false },
 };
 

@@ -4,17 +4,13 @@ import {
   FolderOpenIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
+import { HiraLogo } from "@/components/hira-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 function Brand() {
   return (
     <div className="flex items-center gap-2.5">
-      <span
-        aria-hidden="true"
-        className="grid size-9 place-items-center rounded-lg bg-primary font-heading text-[15px] font-semibold text-primary-foreground"
-      >
-        H
-      </span>
+      <HiraLogo size={48} />
       <span className="leading-tight">
         <span className="block text-[15px] font-medium tracking-[-0.01em]">
           HiraAgency

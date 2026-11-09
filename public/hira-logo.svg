@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Top Pillar White Gradient -->
+    <linearGradient id="topGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e2ecf7" />
+    </linearGradient>
+
+    <!-- Bottom Pillar Deep Midnight Blue (RGB 34, 57, 111) Gradient -->
+    <linearGradient id="botGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3d578c" />
+      <stop offset="100%" stop-color="#22396f" /> <!-- RGB: 34, 57, 111 -->
+    </linearGradient>
+  </defs>
+
+  <!-- Dark Slate/Navy Background -->
+  <rect id="background" width="500" height="500" fill="#131924" />
+
+  <g id="hira-timeline-logo">
+    <!-- Top Pillars of the H -->
+    <path d="M 134 100 H 200 V 204 H 120 V 114 A 14 14 0 0 1 134 100 Z" fill="url(#topGrad)" />
+    <path d="M 300 100 H 366 A 14 14 0 0 1 380 114 V 204 H 300 V 100 Z" fill="url(#topGrad)" />
+
+    <!-- Bottom Pillars of the H -->
+    <path d="M 120 296 H 200 V 400 H 134 A 14 14 0 0 1 120 386 V 296 Z" fill="url(#botGrad)" />
+    <path d="M 300 296 H 380 V 386 A 14 14 0 0 1 366 400 H 300 V 296 Z" fill="url(#botGrad)" />
+
+    <!-- Timeline Track 1 (Top Row) - Graduating downwards from White -->
+    <g id="timeline-row-1">
+      <rect x="120" y="215" width="52" height="32" rx="6" fill="#e2ecf7" />
+      <rect x="178" y="215" width="52" height="32" rx="6" fill="#c3d5e8" />
+      <rect x="236" y="215" width="12" height="32" rx="4" fill="#cad7e6" />
+      <rect x="254" y="215" width="48" height="32" rx="6" fill="#ffffff" />
+      <rect x="308" y="215" width="22" height="32" rx="6" fill="#f0f5fa" />
+      <rect x="336" y="215" width="44" height="32" rx="6" fill="#d0dfef" />
+    </g>
+
+    <!-- Timeline Track 2 (Bottom Row) - Transitioning into medium/deep blue -->
+    <g id="timeline-row-2">
+      <rect x="120" y="253" width="30" height="32" rx="6" fill="#8ca2c4" />
+      <rect x="156" y="253" width="50" height="32" rx="6" fill="#718bb3" />
+      <rect x="212" y="253" width="36" height="32" rx="6" fill="#dbe5f2" />
+      <rect x="252" y="253" width="28" height="32" rx="6" fill="#99b2d6" />
+      <rect x="286" y="253" width="60" height="32" rx="6" fill="#bacbe2" />
+      <rect x="352" y="253" width="28" height="32" rx="6" fill="#5c7aa6" />
+    </g>
+
+    <!-- Center Playhead / Scrubbing Cursor -->
+    <g id="playhead">
+      <polygon points="241,193 259,193 250,207" fill="#ffffff" />
+      <rect x="248.5" y="211" width="3" height="92" rx="1.5" fill="#ffffff" opacity="0.9" />
+    </g>
+  </g>
+</svg>

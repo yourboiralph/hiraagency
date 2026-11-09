@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { signOutAction } from "@/app/(app)/actions";
+import { HiraLogo } from "@/components/hira-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -153,15 +154,10 @@ function Brand({ compact = false }: { compact?: boolean }) {
       href="/dashboard"
       className="flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "grid shrink-0 place-items-center rounded-lg bg-sidebar-primary font-heading font-semibold text-sidebar-primary-foreground",
-          compact ? "size-8 text-[13px]" : "size-9 text-[15px]",
-        )}
-      >
-        H
-      </span>
+      <HiraLogo
+        size={compact ? 36 : 44}
+        className="ring-1 ring-white/10"
+      />
       <span className="leading-tight">
         <span
           className={cn(
