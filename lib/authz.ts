@@ -5,7 +5,7 @@ import { cache } from "react";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import type { Role } from "@/lib/generated/prisma/enums";
+import type { ProjectRole, Role } from "@/lib/generated/prisma/enums";
 
 export type SessionUser = {
   id: string;
@@ -105,6 +105,17 @@ export async function getReviewerScope(
     canReview: memberships.length > 0,
     projectIds: memberships.map((member) => member.projectId),
   };
+}
+
+/**
+ * Submission notes, links and images are private to the author, the project
+ * lead and global administrators. Ordinary members see the entry itself.
+ */
+export function canViewSubmissionDetails(
+  user: Pick<SessionUser, "role">,
+  projectRole: ProjectRole | null,
+): boolean {
+  return user.role === "ADMIN" || projectRole === "LEAD";
 }
 
 export async function requireReviewer(): Promise<{

@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { ClipboardTextIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  ClipboardTextIcon,
+  LockSimpleIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { LinkChips } from "@/components/link-chips";
 import { SubmissionStatusBadge } from "@/components/status-badge";
@@ -14,13 +17,21 @@ export function SubmissionCard({
   today,
   projectSlug,
   showHiddenTaskOrders = false,
+  canViewAllDetails = false,
+  viewerId,
 }: {
   submission: FeedSubmission;
   today: string;
   projectSlug: string;
   /** Managers see the chip for hidden orders; members must not. */
   showHiddenTaskOrders?: boolean;
+  /** Leads and admins see every submission's notes, links and images. */
+  canViewAllDetails?: boolean;
+  /** The signed-in viewer; authors see their own details. */
+  viewerId: string;
 }) {
+  const canSeeDetails =
+    canViewAllDetails || submission.author.id === viewerId;
   const loggedAt =
     submission.workDate === today
       ? formatTime(submission.createdAt)
@@ -68,38 +79,47 @@ export function SubmissionCard({
             {submission.title}
           </p>
 
-          {submission.notes ? (
+          {canSeeDetails && submission.notes ? (
             <p className="mt-1 whitespace-pre-line text-sm leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
               {submission.notes}
             </p>
           ) : null}
 
-          <LinkChips links={submission.links} />
+          {canSeeDetails ? (
+            <>
+              <LinkChips links={submission.links} />
 
-          {submission.images.length > 0 ? (
-            <ul className="mt-2 grid max-w-md grid-cols-3 gap-1.5 sm:grid-cols-4">
-              {submission.images.map((image) => (
-                <li key={image.id}>
-                  <a
-                    href={`/api/media/${image.key}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block aspect-square overflow-hidden rounded-md border border-border/70"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`/api/media/${image.key}`}
-                      alt=""
-                      loading="lazy"
-                      className="size-full object-cover transition-transform duration-[600ms] ease-out hover:scale-[1.03]"
-                    />
-                  </a>
-                </li>
-              ))}
-            </ul>
+              {submission.images.length > 0 ? (
+                <ul className="mt-2 grid max-w-md grid-cols-3 gap-1.5 sm:grid-cols-4">
+                  {submission.images.map((image) => (
+                    <li key={image.id}>
+                      <a
+                        href={`/api/media/${image.key}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block aspect-square overflow-hidden rounded-md border border-border/70"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/media/${image.key}`}
+                          alt=""
+                          loading="lazy"
+                          className="size-full object-cover transition-transform duration-[600ms] ease-out hover:scale-[1.03]"
+                        />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
+          ) : submission.hasHiddenDetails ? (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <LockSimpleIcon aria-hidden="true" className="size-3.5" />
+              Notes, links and images are visible to the project lead and admins.
+            </p>
           ) : null}
 
-          {submission.reviewNote ? (
+          {canSeeDetails && submission.reviewNote ? (
             <p
               className={cn(
                 "mt-2 rounded-md px-2 py-1.5 text-[13px] [overflow-wrap:anywhere]",

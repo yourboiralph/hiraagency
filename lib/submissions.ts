@@ -30,6 +30,10 @@ export type FeedSubmission = {
   taskOrder: { id: string; title: string; hidden: boolean } | null;
   links: FeedLink[];
   images: { id: string; key: string }[];
+  /** Totals stay visible even when the viewer may not see the items. */
+  counts: { links: number; images: number };
+  /** True when notes, links or images exist but this viewer may not see them. */
+  hasHiddenDetails: boolean;
 };
 
 export async function listProjectSubmissions(
@@ -38,8 +42,16 @@ export async function listProjectSubmissions(
     take?: number;
     taskOrderId?: string;
     statuses?: SubmissionStatus[];
+    /** Leads and admins see every submission's notes, links and images. */
+    canViewAllDetails?: boolean;
+    /** Authors always see their own details. */
+    viewerId?: string;
   } = {},
 ): Promise<FeedSubmission[]> {
+  const canViewAll = options.canViewAllDetails ?? false;
+  const viewerId = options.viewerId ?? "";
+  const ownDetails = { submission: { authorId: viewerId } };
+
   const rows = await db.submission.findMany({
     where: {
       projectId,
@@ -61,20 +73,39 @@ export async function listProjectSubmissions(
       reviewer: { select: { name: true } },
       taskOrder: { select: { id: true, title: true, hidden: true } },
       links: {
+        ...(canViewAll ? {} : { where: ownDetails }),
         orderBy: { position: "asc" },
         select: { id: true, url: true, platform: true, label: true },
       },
       images: {
+        ...(canViewAll ? {} : { where: ownDetails }),
         orderBy: { position: "asc" },
         select: { id: true, key: true },
       },
+      _count: { select: { links: true, images: true } },
     },
   });
 
-  return rows.map((row) => ({
-    ...row,
-    workDate: fromDbDate(row.workDate),
-  }));
+  return rows.map(({ _count, ...row }) => {
+    const canSeeDetails = canViewAll || row.author.id === viewerId;
+    const counts = { links: _count.links, images: _count.images };
+
+    return {
+      ...row,
+      workDate: fromDbDate(row.workDate),
+      notes: canSeeDetails ? row.notes : null,
+      reviewNote: canSeeDetails ? row.reviewNote : null,
+      links: canSeeDetails ? row.links : [],
+      images: canSeeDetails ? row.images : [],
+      counts,
+      hasHiddenDetails:
+        !canSeeDetails &&
+        (Boolean(row.notes) ||
+          Boolean(row.reviewNote) ||
+          counts.links > 0 ||
+          counts.images > 0),
+    };
+  });
 }
 
 /** Dashboard: what this person submitted for one workday, newest first. */

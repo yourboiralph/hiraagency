@@ -394,6 +394,7 @@ These differ from the original assumptions and are now the real state of the rep
 | **Review identity** | Review cards lead with the author's avatar and name; the project is a small line with a color dot | the queue is about the person's work, and showing the project first read as the project itself being reviewed |
 | **Notifications** | Created on submit for every active admin plus the project's leads, excluding the author. Marked read by a review decision, or by "Mark all as read" | reviewers find out without polling; the count means unhandled work |
 | **Notification surfaces** | Sidebar badge + `/notifications`, dashboard "Waiting for review" card, per-project pending badges | the same event is visible where reviewers already look |
+| **Submission privacy** | Members see another person's submission (author, time, title, status) but not notes, links or images. Authors see their own; leads and admins see all. `listProjectSubmissions` filters links/images at the query, then strips notes for everyone else | the URLs never enter a member's payload, so the UI is not the only gate |
 
 ---
 

@@ -18,7 +18,7 @@ import {
   TaskOrderStatusBadge,
 } from "@/components/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { requireUser } from "@/lib/authz";
+import { canViewSubmissionDetails, requireUser } from "@/lib/authz";
 import { formatInstantDate, workDateToday } from "@/lib/date";
 import { db } from "@/lib/db";
 import { getProjectForUser } from "@/lib/projects";
@@ -52,12 +52,15 @@ export default async function TaskOrderPage({
   if (!order) notFound();
 
   const canManage = canManageTaskOrders(user, myRole);
+  const canViewAllDetails = canViewSubmissionDetails(user, myRole);
 
   // Hidden orders are invisible to members, including by direct URL.
   if (order.hidden && !canManage) notFound();
 
   const submissions = await listProjectSubmissions(project.id, {
     taskOrderId: order.id,
+    canViewAllDetails,
+    viewerId: user.id,
   });
 
   // Rejection is final for this member on this order.
@@ -272,6 +275,8 @@ export default async function TaskOrderPage({
                   today={today}
                   projectSlug={project.slug}
                   showHiddenTaskOrders={canManage}
+                  canViewAllDetails={canViewAllDetails}
+                  viewerId={user.id}
                 />
               ))}
             </ul>

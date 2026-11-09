@@ -16,7 +16,7 @@ import { SubmissionCard } from "@/components/submission-card";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { requireUser } from "@/lib/authz";
+import { canViewSubmissionDetails, requireUser } from "@/lib/authz";
 import {
   formatInstantDate,
   workDateLabel,
@@ -68,9 +68,12 @@ export default async function ProjectPage({
   const { project, myRole, members } = await getProjectForUser(slug, user);
 
   const filter = parseFeedFilter(status);
+  const canViewAllDetails = canViewSubmissionDetails(user, myRole);
 
   const submissions = await listProjectSubmissions(project.id, {
     statuses: FEED_STATUSES[filter],
+    canViewAllDetails,
+    viewerId: user.id,
   });
   const today = workDateToday();
   const canSubmit = myRole !== null && project.status === "ACTIVE";
@@ -324,6 +327,8 @@ export default async function ProjectPage({
                         today={today}
                         projectSlug={project.slug}
                         showHiddenTaskOrders={canManageOrders}
+                        canViewAllDetails={canViewAllDetails}
+                        viewerId={user.id}
                       />
                     ))}
                   </ul>
