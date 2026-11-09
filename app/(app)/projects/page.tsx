@@ -9,9 +9,10 @@ import { EmptyPanel } from "@/components/empty-panel";
 import { PageHeader } from "@/components/page-header";
 import { ProjectMark } from "@/components/project-mark";
 import { ProjectStatusBadge } from "@/components/status-badge";
-import { requireUser } from "@/lib/authz";
+import { requireUser, getReviewerScope } from "@/lib/authz";
 import { fromDbDate, workDateLabel } from "@/lib/date";
 import { listProjects } from "@/lib/projects";
+import { getPendingCountsByProject } from "@/lib/reviews";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -19,7 +20,19 @@ export const metadata: Metadata = {
 
 export default async function ProjectsPage() {
   const user = await requireUser();
+  const reviewer = await getReviewerScope(user);
   const projects = await listProjects(user);
+
+  const reviewableProjectIds =
+    reviewer.projectIds === null
+      ? projects.map((project) => project.id)
+      : projects
+          .filter((project) => reviewer.projectIds?.includes(project.id))
+          .map((project) => project.id);
+
+  const pendingByProject = reviewer.canReview
+    ? await getPendingCountsByProject(reviewableProjectIds)
+    : new Map<string, number>();
 
   const active = projects.filter((project) => project.status === "ACTIVE");
   const archived = projects.filter((project) => project.status === "ARCHIVED");
@@ -30,7 +43,7 @@ export default async function ProjectsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Projects"
         description={
@@ -67,12 +80,12 @@ export default async function ProjectsPage() {
         />
       ) : (
         <section aria-label="Active projects">
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {active.map((project) => (
               <li key={project.id}>
                 <Link
                   href={`/projects/${project.slug}`}
-                  className="group flex h-full flex-col gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="card-lift group flex h-full flex-col gap-4 rounded-2xl border border-border bg-card p-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   <div className="flex items-start gap-3">
                     <ProjectMark
@@ -81,12 +94,19 @@ export default async function ProjectsPage() {
                       image={project.image}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-base font-medium">
                         {project.name}
                       </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                        {project.memberCount}{" "}
-                        {project.memberCount === 1 ? "member" : "members"}
+                      <p className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                        <span>
+                          {project.memberCount}{" "}
+                          {project.memberCount === 1 ? "member" : "members"}
+                        </span>
+                        {(pendingByProject.get(project.id) ?? 0) > 0 ? (
+                          <span className="rounded-sm bg-warning/10 px-1.5 py-0.5 text-warning">
+                            {pendingByProject.get(project.id)} pending
+                          </span>
+                        ) : null}
                       </p>
                     </div>
                     <CaretRightIcon
@@ -95,11 +115,11 @@ export default async function ProjectsPage() {
                     />
                   </div>
 
-                  <p className="line-clamp-2 min-h-8 text-xs text-muted-foreground">
+                  <p className="line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
                     {project.description ?? "No description yet."}
                   </p>
 
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-2.5 text-[11px] text-muted-foreground">
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3 text-xs text-muted-foreground">
                     <span>{roleLabel(project.myRole)}</span>
                     <span>
                       {project.myLastWorkDate
@@ -122,7 +142,7 @@ export default async function ProjectsPage() {
           >
             Archived
           </h2>
-          <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
             {archived.map((project) => (
               <li key={project.id}>
                 <Link

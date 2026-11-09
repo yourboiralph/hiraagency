@@ -31,7 +31,7 @@ export default async function AdminProjectPage({
   const { project, members, assignable } = await getAdminProject(id);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Project"
         title={project.name}
@@ -40,7 +40,7 @@ export default async function AdminProjectPage({
         actions={
           <Link
             href={`/projects/${project.slug}`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <ArrowSquareOutIcon aria-hidden="true" className="size-4" />
             Member view
@@ -58,10 +58,10 @@ export default async function AdminProjectPage({
         <span>Created {formatInstantDate(project.createdAt)}</span>
       </div>
 
-      <div className="grid items-start gap-3 lg:grid-cols-5">
+      <div className="grid items-start gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-base">Details</CardTitle>
+            <CardTitle className="text-[17px]">Details</CardTitle>
             <CardDescription>
               How the project appears on cards and its page.
             </CardDescription>
@@ -71,10 +71,10 @@ export default async function AdminProjectPage({
           </CardContent>
         </Card>
 
-        <div className="space-y-3 lg:col-span-2">
+        <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Members</CardTitle>
+              <CardTitle className="text-[17px]">Members</CardTitle>
               <CardDescription>
                 People added here can submit work for this project. Leads are
                 marked, but review is still done by an administrator.

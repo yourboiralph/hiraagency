@@ -30,7 +30,9 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
       <FormErrorSummary message={state.formError} />
 
       <div className="space-y-2">
-        <Label htmlFor={emailId}>Email</Label>
+        <Label htmlFor={emailId} className="text-[13px] font-medium">
+          Email
+        </Label>
         <Input
           id={emailId}
           name="email"
@@ -46,7 +48,7 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
           aria-describedby={
             state.fieldErrors?.email ? emailErrorId : undefined
           }
-          className="h-11 font-mono text-sm"
+          className="h-11 font-mono"
           placeholder="you@hiraagency.com"
         />
         {state.fieldErrors?.email ? (
@@ -57,7 +59,9 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={passwordId}>Password</Label>
+        <Label htmlFor={passwordId} className="text-[13px] font-medium">
+          Password
+        </Label>
         <Input
           id={passwordId}
           name="password"
@@ -91,10 +95,6 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
           "Sign in"
         )}
       </Button>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Accounts are created by an administrator. There is no self sign-up.
-      </p>
     </form>
   );
 }

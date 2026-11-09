@@ -41,7 +41,7 @@ export function CredentialsPanel({
 
       <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             Email
           </p>
           <p className="mt-0.5 font-mono text-sm break-all">
@@ -50,7 +50,7 @@ export function CredentialsPanel({
         </div>
 
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             Temporary password
           </p>
           <div className="mt-1 flex items-center gap-2">

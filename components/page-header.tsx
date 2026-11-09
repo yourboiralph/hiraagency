@@ -15,11 +15,11 @@ export function PageHeader({
   eyebrow?: string;
 }) {
   return (
-    <header className="space-y-4">
+    <header className="space-y-5">
       {back ? (
         <Link
           href={back.href}
-          className="inline-flex max-w-full items-center gap-1.5 truncate text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex max-w-full items-center gap-1.5 truncate text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline hover:underline-offset-4"
         >
           <ArrowLeftIcon aria-hidden="true" className="size-4" />
           {back.label}
@@ -29,15 +29,15 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           {eyebrow ? (
-            <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            <p className="font-mono text-xs font-medium text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
-          <h1 className="[overflow-wrap:anywhere] text-2xl font-semibold tracking-tight">
+          <h1 className="[overflow-wrap:anywhere] text-3xl font-medium tracking-[-0.03em] md:text-[2.5rem] md:leading-[1.05]">
             {title}
           </h1>
           {description ? (
-            <p className="mt-1 max-w-prose text-sm [overflow-wrap:anywhere] text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-base leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
               {description}
             </p>
           ) : null}

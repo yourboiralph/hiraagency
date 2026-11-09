@@ -17,7 +17,7 @@ export function FormSelect({
       <select
         {...props}
         className={cn(
-          "h-9 w-full appearance-none rounded-lg border border-input bg-transparent px-2.5 pr-8 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive dark:bg-input/30 [&>option]:bg-popover [&>option]:text-popover-foreground",
+          "h-11 w-full appearance-none rounded-lg border border-input bg-background/50 px-3 pr-9 text-base transition-[border-color,box-shadow,background-color] duration-150 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20 focus-visible:bg-background disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive [&>option]:bg-popover [&>option]:text-popover-foreground",
           className,
         )}
       >

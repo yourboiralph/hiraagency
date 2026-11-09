@@ -70,19 +70,19 @@ export function CheckInCard({
   return (
     <Card
       className={cn(
-        "gap-0 py-4",
-        status === "idle" && "bg-warning/5 ring-warning/30",
-        status === "working" && "bg-primary/5 ring-primary/30",
+        "gap-0 overflow-hidden border-l-4 py-5",
+        status === "idle" && "border-l-warning bg-warning/5",
+        status === "working" && "border-l-success bg-success/5",
       )}
     >
-      <CardContent className="flex flex-wrap items-center justify-between gap-4 px-4">
-        <div className="flex items-start gap-3">
+      <CardContent className="flex flex-wrap items-center justify-between gap-5 px-5">
+        <div className="flex items-start gap-4">
           <span
             aria-hidden="true"
             className={cn(
-              "grid size-9 shrink-0 place-items-center rounded-lg",
+              "grid size-11 shrink-0 place-items-center rounded-xl",
               status === "idle" && "bg-warning/10 text-warning",
-              status === "working" && "bg-primary/10 text-primary",
+              status === "working" && "bg-success/10 text-success",
               status === "done" && "bg-muted text-muted-foreground",
             )}
           >
@@ -96,8 +96,10 @@ export function CheckInCard({
           </span>
 
           <div aria-live="polite">
-            <p className="text-sm font-medium">{title}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+            <p className="text-base font-medium">{title}</p>
+            <p className="mt-1 max-w-lg text-sm leading-relaxed text-muted-foreground">
+              {detail}
+            </p>
             {error ? (
               <p role="alert" className="mt-2 text-sm text-destructive">
                 {error}
@@ -124,10 +126,10 @@ function SubmitButton({ checkingOut }: { checkingOut: boolean }) {
   return (
     <Button
       type="submit"
-      size="sm"
+      size="default"
       variant={checkingOut ? "outline" : "default"}
       disabled={pending}
-      className="h-9 px-3"
+      className="h-10 px-4"
     >
       {pending ? (
         <SpinnerGapIcon aria-hidden="true" className="size-4 animate-spin" />

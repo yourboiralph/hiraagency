@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarCheckIcon,
+  BellIcon,
   ClipboardTextIcon,
   FolderOpenIcon,
+  ShieldCheckIcon,
   SignOutIcon,
   SquaresFourIcon,
-  ShieldCheckIcon,
+  UserCircleIcon,
   type Icon,
 } from "@phosphor-icons/react";
 
 import { signOutAction } from "@/app/(app)/actions";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,7 @@ type NavUser = {
   image: string | null;
   role: "ADMIN" | "MEMBER";
   canReview: boolean;
+  notificationCount: number;
 };
 
 type NavItem = {
@@ -31,81 +34,110 @@ type NavItem = {
   icon: Icon;
   adminOnly?: boolean;
   reviewerOnly?: boolean;
+  badge?: number;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: SquaresFourIcon },
-  { href: "/projects", label: "Projects", icon: FolderOpenIcon },
-  { href: "/me", label: "My profile", icon: CalendarCheckIcon },
+const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
-    href: "/reviews",
-    label: "Reviews",
-    icon: ClipboardTextIcon,
-    reviewerOnly: true,
+    label: "Work",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: SquaresFourIcon },
+      { href: "/projects", label: "Projects", icon: FolderOpenIcon },
+      { href: "/me", label: "My profile", icon: UserCircleIcon },
+    ],
   },
-  { href: "/admin", label: "Admin", icon: ShieldCheckIcon, adminOnly: true },
+  {
+    label: "Review",
+    items: [
+      {
+        href: "/reviews",
+        label: "Reviews",
+        icon: ClipboardTextIcon,
+        reviewerOnly: true,
+      },
+      {
+        href: "/notifications",
+        label: "Notifications",
+        icon: BellIcon,
+        reviewerOnly: true,
+      },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      {
+        href: "/admin",
+        label: "Admin",
+        icon: ShieldCheckIcon,
+        adminOnly: true,
+      },
+    ],
+  },
 ];
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavLinks({
-  items,
+function NavLink({
+  item,
   pathname,
   orientation,
 }: {
-  items: NavItem[];
+  item: NavItem;
   pathname: string;
   orientation: "vertical" | "horizontal";
 }) {
+  const active = isActive(pathname, item.href);
+  const IconComponent = item.icon;
+
   return (
-    <nav
-      aria-label="Main"
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        orientation === "vertical"
-          ? "flex flex-col gap-0.5"
-          : "flex gap-1 overflow-x-auto",
+        "flex items-center gap-2.5 rounded-lg px-3 text-[14px] font-medium transition-colors",
+        orientation === "vertical" ? "py-2.5" : "shrink-0 whitespace-nowrap py-2",
+        active
+          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
-      {items.map((item) => {
-        const active = isActive(pathname, item.href);
-        const IconComponent = item.icon;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-              orientation === "horizontal" && "shrink-0 whitespace-nowrap",
-              active
-                ? "bg-accent font-medium text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <IconComponent
-              aria-hidden="true"
-              weight={active ? "fill" : "regular"}
-              className="size-4 shrink-0"
-            />
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
+      <IconComponent
+        aria-hidden="true"
+        weight={active ? "fill" : "regular"}
+        className="size-4 shrink-0"
+      />
+      {item.label}
+      {item.badge ? (
+        <span
+          className={cn(
+            "ml-auto rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold",
+            active
+              ? "bg-sidebar-primary-foreground text-sidebar-primary"
+              : "bg-sidebar-primary text-sidebar-primary-foreground",
+          )}
+        >
+          {item.badge > 9 ? "9+" : item.badge}
+        </span>
+      ) : null}
+    </Link>
   );
 }
 
-function SignOutButton({ compact = false }: { compact?: boolean }) {
+function SignOutButton({ compact = true }: { compact?: boolean }) {
   return (
     <form action={signOutAction}>
       <Button
         type="submit"
-        variant={compact ? "ghost" : "ghost"}
+        variant="ghost"
         size={compact ? "icon-sm" : "sm"}
-        className={compact ? undefined : "w-full justify-start gap-2 text-muted-foreground"}
+        className={
+          compact
+            ? "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            : "w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        }
         aria-label="Sign out"
       >
         <SignOutIcon aria-hidden="true" className="size-4" />
@@ -115,69 +147,129 @@ function SignOutButton({ compact = false }: { compact?: boolean }) {
   );
 }
 
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <Link
+      href="/dashboard"
+      className="flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "grid shrink-0 place-items-center rounded-lg bg-sidebar-primary font-heading font-semibold text-sidebar-primary-foreground",
+          compact ? "size-8 text-[13px]" : "size-9 text-[15px]",
+        )}
+      >
+        H
+      </span>
+      <span className="leading-tight">
+        <span
+          className={cn(
+            "block font-medium tracking-[-0.01em] text-sidebar-foreground",
+            compact ? "text-[14px]" : "text-[15px]",
+          )}
+        >
+          HiraAgency
+        </span>
+        <span className="mt-0.5 block font-mono text-xs text-sidebar-foreground/60">
+          Workspace
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 export function AppSidebar({ user }: { user: NavUser }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter(
-    (item) =>
-      (!item.adminOnly || user.role === "ADMIN") &&
-      (!item.reviewerOnly || user.canReview),
-  );
+
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items
+      .filter(
+        (item) =>
+          (!item.adminOnly || user.role === "ADMIN") &&
+          (!item.reviewerOnly || user.canReview),
+      )
+      .map((item) =>
+        item.href === "/notifications"
+          ? { ...item, badge: user.notificationCount }
+          : item,
+      ),
+  })).filter((group) => group.items.length > 0);
+
+  const flatItems = groups.flatMap((group) => group.items);
 
   return (
     <>
       {/* Desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-border bg-sidebar md:flex">
-        <div className="flex items-center gap-2.5 px-5 py-5">
-          <span
-            aria-hidden="true"
-            className="grid size-8 place-items-center rounded-md bg-primary font-mono text-xs font-semibold text-primary-foreground"
-          >
-            H
-          </span>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold">HiraAgency</p>
-            <p className="text-[11px] text-muted-foreground">Workspace</p>
-          </div>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-sidebar-border bg-sidebar md:flex">
+        <div className="px-5 pb-5 pt-6">
+          <Brand />
         </div>
 
-        <div className="flex-1 px-3">
-          <NavLinks items={items} pathname={pathname} orientation="vertical" />
-        </div>
+        <nav
+          aria-label="Main"
+          className="flex-1 overflow-y-auto px-3 pb-4"
+        >
+          {groups.map((group) => (
+            <div key={group.label} className="pb-1 pt-5 first:pt-1">
+              <p className="px-3 pb-1.5 text-[13px] font-medium text-sidebar-foreground/50">
+                {group.label}
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    pathname={pathname}
+                    orientation="vertical"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
 
-        <div className="border-t border-border p-3">
+        <div className="border-t border-sidebar-border p-3">
           <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
             <UserAvatar name={user.name} image={user.image} size="md" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-sm font-medium">{user.name}</p>
-              <p className="truncate font-mono text-[11px] text-muted-foreground">
-                {user.role === "ADMIN" ? "Administrator" : "Member"}
+              <p className="truncate text-[13px] font-medium text-sidebar-foreground">
+                {user.name}
+              </p>
+              <p className="truncate font-mono text-xs text-sidebar-foreground/60">
+                {user.role === "ADMIN" ? "Admin" : "Member"}
               </p>
             </div>
-            <SignOutButton compact />
+            <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
+            <SignOutButton />
           </div>
         </div>
       </aside>
 
       {/* Mobile */}
-      <header className="sticky top-0 z-30 border-b border-border bg-sidebar/95 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 border-b border-sidebar-border bg-sidebar/95 backdrop-blur md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="grid size-7 place-items-center rounded-md bg-primary font-mono text-[11px] font-semibold text-primary-foreground"
-            >
-              H
-            </span>
-            <span className="text-sm font-semibold">HiraAgency</span>
-          </div>
-          <div className="flex items-center gap-2">
+          <Brand compact />
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
             <UserAvatar name={user.name} image={user.image} size="xs" />
-            <SignOutButton compact />
+            <SignOutButton />
           </div>
         </div>
-        <div className="px-3 pb-2">
-          <NavLinks items={items} pathname={pathname} orientation="horizontal" />
-        </div>
+        <nav
+          aria-label="Main"
+          className="flex gap-1 overflow-x-auto px-3 pb-2"
+        >
+          {flatItems.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              orientation="horizontal"
+            />
+          ))}
+        </nav>
       </header>
     </>
   );

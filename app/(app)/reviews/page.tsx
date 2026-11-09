@@ -5,7 +5,7 @@ import { CheckCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { EmptyPanel } from "@/components/empty-panel";
 import { LinkChips } from "@/components/link-chips";
 import { PageHeader } from "@/components/page-header";
-import { ProjectMark } from "@/components/project-mark";
+import { UserAvatar } from "@/components/user-avatar";
 import { requireReviewer } from "@/lib/authz";
 import { formatInstantDate, formatWorkDate } from "@/lib/date";
 import { listPendingReviews, type ReviewItem } from "@/lib/reviews";
@@ -18,36 +18,51 @@ export const metadata: Metadata = {
 
 function ReviewCard({ item }: { item: ReviewItem }) {
   return (
-    <li className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+    <li className="rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-start gap-3">
-        <ProjectMark
-          name={item.project.name}
-          color={item.project.color}
-          image={item.project.image}
+        <UserAvatar
+          name={item.author.name}
+          image={item.author.image}
+          size="md"
         />
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <p className="text-[15px] font-medium [overflow-wrap:anywhere]">
+              {item.author.name}
+            </p>
+            <span className="font-mono text-xs text-muted-foreground">
+              logged {formatInstantDate(item.createdAt)}
+            </span>
+          </div>
+
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <Link
               href={`/projects/${item.project.slug}`}
-              className="text-sm font-medium [overflow-wrap:anywhere] hover:underline"
+              className="inline-flex items-center gap-1.5 hover:text-foreground"
             >
+              <span
+                aria-hidden="true"
+                className="size-1.5 rounded-full"
+                style={{ backgroundColor: item.project.color }}
+              />
               {item.project.name}
             </Link>
-            <span className="font-mono text-[11px] text-muted-foreground">
-              work date {formatWorkDate(item.workDate)}
-            </span>
+            <span aria-hidden="true">·</span>
+            <span>work date {formatWorkDate(item.workDate)}</span>
             {item.taskOrder ? (
-              <span className="rounded-md bg-info/10 px-1.5 py-0.5 text-[11px] text-info">
+              <span className="rounded-md bg-info/10 px-1.5 py-0.5 text-xs text-info">
                 {item.taskOrder.title}
               </span>
             ) : null}
           </div>
 
-          <p className="mt-1.5 text-sm [overflow-wrap:anywhere]">{item.title}</p>
+          <p className="mt-2 text-[15px] [overflow-wrap:anywhere]">
+            {item.title}
+          </p>
 
           {item.notes ? (
-            <p className="mt-1 whitespace-pre-line text-xs [overflow-wrap:anywhere] text-muted-foreground">
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
               {item.notes}
             </p>
           ) : null}
@@ -77,16 +92,9 @@ function ReviewCard({ item }: { item: ReviewItem }) {
             </ul>
           ) : null}
         </div>
-
-        <div className="text-right">
-          <p className="text-sm [overflow-wrap:anywhere]">{item.author.name}</p>
-          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-            logged {formatInstantDate(item.createdAt)}
-          </p>
-        </div>
       </div>
 
-      <div className="mt-3 border-t border-border/70 pt-3">
+      <div className="mt-4 border-t border-border/70 pt-4">
         <ReviewActions
           submissionId={item.id}
           hasTaskOrder={Boolean(item.taskOrder)}
@@ -101,7 +109,7 @@ export default async function ReviewsPage() {
   const items = await listPendingReviews({ projectIds });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow={user.role === "ADMIN" ? "Admin" : undefined}
         title="Reviews"
@@ -125,19 +133,19 @@ export default async function ReviewsPage() {
           action={
             <Link
               href="/projects"
-              className="text-xs text-primary hover:underline"
+              className="text-[13px] font-medium text-primary hover:underline hover:underline-offset-4"
             >
               Go to projects
             </Link>
           }
         />
       ) : (
-        <section aria-label="Pending submissions" className="space-y-2">
+        <section aria-label="Pending submissions" className="space-y-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-medium text-muted-foreground">
+            <h2 className="text-[13px] font-medium text-muted-foreground">
               Pending
             </h2>
-            <p className="font-mono text-[11px] text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               {items.length}{" "}
               {items.length === 1 ? "submission" : "submissions"}
             </p>

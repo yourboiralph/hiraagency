@@ -41,7 +41,7 @@ export function MembersPanel({
   return (
     <div className="space-y-4">
       {members.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border px-4 py-5 text-[15px] leading-relaxed text-muted-foreground">
           No one is on this project yet. Add the first person below.
         </p>
       ) : (
@@ -59,7 +59,9 @@ export function MembersPanel({
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-medium">{member.name}</p>
+                  <p className="truncate text-[15px] font-medium">
+                    {member.name}
+                  </p>
                   {member.role === "LEAD" ? (
                     <Badge
                       variant="outline"
@@ -74,7 +76,7 @@ export function MembersPanel({
                     </Badge>
                   )}
                 </div>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">
+                <p className="truncate font-mono text-xs text-muted-foreground">
                   {member.email}
                 </p>
               </div>
@@ -86,7 +88,7 @@ export function MembersPanel({
                   name="role"
                   defaultValue={member.role}
                   aria-label={`Project role for ${member.name}`}
-                  className="h-8 w-28 text-xs"
+                  className="h-9 w-28 text-sm"
                   onChange={(event) => event.currentTarget.form?.requestSubmit()}
                 >
                   <option value="MEMBER">Member</option>
@@ -113,7 +115,7 @@ export function MembersPanel({
       )}
 
       {assignable.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Everyone with an active account is already on this project.
         </p>
       ) : (
@@ -145,7 +147,7 @@ function AddMemberForm({
   return (
     <form
       action={formAction}
-      className="space-y-3 rounded-lg border border-border/70 p-3"
+      className="space-y-3 rounded-xl border border-border/70 p-4"
     >
       <input type="hidden" name="projectId" value={projectId} />
       <FormErrorSummary message={state.formError} />

@@ -26,7 +26,7 @@ export default async function AdminProjectsPage() {
   ).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Admin"
         title="Projects"
@@ -42,25 +42,25 @@ export default async function AdminProjectsPage() {
           description="Create the first project, then add the people working on it. Members only see the projects they belong to."
         />
       ) : (
-        <section aria-labelledby="project-list-heading" className="space-y-2">
+        <section aria-labelledby="project-list-heading" className="space-y-3">
           <div className="flex items-baseline justify-between gap-3">
             <h2
               id="project-list-heading"
-              className="text-sm font-medium text-muted-foreground"
+              className="text-[13px] font-medium text-muted-foreground"
             >
               All projects
             </h2>
-            <p className="font-mono text-[11px] text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               {activeCount} active · {projects.length} total
             </p>
           </div>
 
-          <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
             {projects.map((project) => (
               <li key={project.id}>
                 <Link
                   href={`/admin/projects/${project.id}`}
-                  className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
+                  className="group flex items-center gap-3 px-5 py-4 transition-colors hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
                 >
                   <ProjectMark
                     name={project.name}
@@ -70,12 +70,12 @@ export default async function AdminProjectsPage() {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-medium">
+                      <span className="truncate text-[15px] font-medium">
                         {project.name}
                       </span>
                       <ProjectStatusBadge status={project.status} />
                     </div>
-                    <p className="truncate font-mono text-[11px] text-muted-foreground">
+                    <p className="truncate font-mono text-xs text-muted-foreground">
                       /{project.slug}
                     </p>
                   </div>
@@ -85,7 +85,7 @@ export default async function AdminProjectsPage() {
                       {project.memberCount}{" "}
                       {project.memberCount === 1 ? "member" : "members"}
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {project.submissionCount} submissions
                     </p>
                   </div>

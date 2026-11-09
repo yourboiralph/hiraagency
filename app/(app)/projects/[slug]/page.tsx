@@ -23,10 +23,12 @@ import {
   workDateToday,
 } from "@/lib/date";
 import { getProjectForUser } from "@/lib/projects";
+import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
 import {
   listProjectSubmissions,
   type FeedSubmission,
 } from "@/lib/submissions";
+import { cn } from "@/lib/utils";
 import { canManageTaskOrders, listTaskOrders } from "@/lib/task-orders";
 
 import { NewTaskOrderDialog } from "./task-orders/new-task-order-dialog";
@@ -35,19 +37,41 @@ export const metadata: Metadata = {
   title: "Project",
 };
 
+type FeedFilter = "pending" | "approved" | "all";
+
+const FEED_FILTERS: { value: FeedFilter; label: string }[] = [
+  { value: "pending", label: "Pending review" },
+  { value: "approved", label: "Approved" },
+  { value: "all", label: "All" },
+];
+
+const FEED_STATUSES: Record<FeedFilter, SubmissionStatus[] | undefined> = {
+  pending: ["PENDING"],
+  approved: ["APPROVED"],
+  all: undefined,
+};
+
+function parseFeedFilter(value: string | undefined): FeedFilter {
+  return value === "approved" || value === "all" ? value : "pending";
+}
+
 export default async function ProjectPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ submitted?: string }>;
+  searchParams: Promise<{ submitted?: string; status?: string }>;
 }) {
   const user = await requireUser();
   const { slug } = await params;
-  const { submitted } = await searchParams;
+  const { submitted, status } = await searchParams;
   const { project, myRole, members } = await getProjectForUser(slug, user);
 
-  const submissions = await listProjectSubmissions(project.id);
+  const filter = parseFeedFilter(status);
+
+  const submissions = await listProjectSubmissions(project.id, {
+    statuses: FEED_STATUSES[filter],
+  });
   const today = workDateToday();
   const canSubmit = myRole !== null && project.status === "ACTIVE";
   const canManageOrders = canManageTaskOrders(user, myRole);
@@ -63,7 +87,7 @@ export default async function ProjectPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         back={{ href: "/projects", label: "Projects" }}
         eyebrow="Project"
@@ -88,7 +112,7 @@ export default async function ProjectPage({
       {submitted === "1" ? (
         <div
           role="status"
-          className="flex items-start gap-2.5 rounded-lg border border-success/40 bg-success/10 p-3 text-sm"
+          className="flex items-start gap-2.5 rounded-xl border border-success/40 bg-success/10 p-4 text-sm"
         >
           <CheckCircleIcon
             weight="fill"
@@ -117,16 +141,16 @@ export default async function ProjectPage({
         </span>
       </div>
 
-      <section aria-labelledby="task-orders-heading" className="space-y-2">
+      <section aria-labelledby="task-orders-heading" className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2
               id="task-orders-heading"
-              className="text-sm font-medium text-muted-foreground"
+              className="text-[17px] font-medium tracking-[-0.01em]"
             >
               Task orders
             </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               Briefs members attach their work to.
             </p>
           </div>
@@ -136,26 +160,26 @@ export default async function ProjectPage({
         </div>
 
         {taskOrders.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+          <p className="rounded-2xl border border-dashed border-border px-5 py-7 text-[15px] leading-relaxed text-muted-foreground">
             No task orders yet.
             {canManageOrders
               ? " Create one to give the team a brief to work against."
               : " A lead can create one when there is a brief."}
           </p>
         ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {taskOrders.map((order) => (
               <li key={order.id}>
                 <Link
                   href={`/projects/${project.slug}/task-orders/${order.id}`}
-                  className="group flex h-full flex-col gap-2 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="card-lift group flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   <div className="flex items-start gap-2">
                     <ClipboardTextIcon
                       aria-hidden="true"
                       className="mt-0.5 size-4 shrink-0 text-muted-foreground"
                     />
-                    <p className="min-w-0 flex-1 truncate text-sm font-medium">
+                    <p className="min-w-0 flex-1 truncate text-[15px] font-medium">
                       {order.title}
                     </p>
                     <span className="flex shrink-0 items-center gap-1">
@@ -164,11 +188,11 @@ export default async function ProjectPage({
                     </span>
                   </div>
 
-                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                  <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                     {order.brief ?? "No brief."}
                   </p>
 
-                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
+                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/70 pt-3 text-xs text-muted-foreground">
                     <span className="font-mono">
                       {order.submissionCount}{" "}
                       {order.submissionCount === 1
@@ -184,42 +208,96 @@ export default async function ProjectPage({
         )}
       </section>
 
-      <div className="grid items-start gap-3 lg:grid-cols-3">
+      <div className="grid items-start gap-4 lg:grid-cols-3">
         <section
           aria-labelledby="feed-heading"
-          className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 lg:col-span-2"
+          className="overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2"
         >
-          <header className="flex items-baseline justify-between gap-3 border-b border-border/70 px-4 py-3">
-            <div>
-              <h2 id="feed-heading" className="text-sm font-medium">
-                Work feed
-              </h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Grouped by workday, newest first.
-              </p>
+          <header className="space-y-3 border-b border-border/70 px-5 py-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div>
+                <h2
+                  id="feed-heading"
+                  className="text-[17px] font-medium tracking-[-0.01em]"
+                >
+                  Work feed
+                </h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Grouped by workday, newest first.
+                </p>
+              </div>
+              {submissions.length > 0 ? (
+                <p className="font-mono text-xs text-muted-foreground">
+                  {submissions.length} shown
+                </p>
+              ) : null}
             </div>
-            {submissions.length > 0 ? (
-              <p className="font-mono text-[11px] text-muted-foreground">
-                {submissions.length} shown
-              </p>
-            ) : null}
+
+            <nav aria-label="Filter work by status" className="flex flex-wrap gap-1">
+              {FEED_FILTERS.map((option) => {
+                const active = option.value === filter;
+                const href =
+                  option.value === "pending"
+                    ? `/projects/${project.slug}`
+                    : `/projects/${project.slug}?status=${option.value}`;
+
+                return (
+                  <Link
+                    key={option.value}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                      active
+                        ? "bg-accent font-medium text-accent-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    {option.label}
+                  </Link>
+                );
+              })}
+            </nav>
           </header>
 
           {submissions.length === 0 ? (
             <div className="px-4 py-12 text-center">
-              <p className="text-sm font-medium">No submissions yet</p>
-              <p className="mx-auto mt-1 max-w-xs text-xs text-muted-foreground">
-                Work submitted for this project will appear here with its links
-                and review status.
-              </p>
-              {canSubmit ? (
-                <Link
-                  href={`/projects/${project.slug}/submit`}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                >
-                  Submit the first link
-                </Link>
-              ) : null}
+              {project._count.submissions === 0 ? (
+                <>
+                  <p className="text-sm font-medium">No submissions yet</p>
+                  <p className="mx-auto mt-1 max-w-xs text-xs text-muted-foreground">
+                    Work submitted for this project will appear here with its
+                    links and review status.
+                  </p>
+                  {canSubmit ? (
+                    <Link
+                      href={`/projects/${project.slug}/submit`}
+                      className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                    >
+                      Submit the first link
+                    </Link>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">
+                    {filter === "pending"
+                      ? "Nothing waiting for review"
+                      : "No approved work yet"}
+                  </p>
+                  <p className="mx-auto mt-1 max-w-xs text-xs text-muted-foreground">
+                    {filter === "pending"
+                      ? "Approved and rejected work is hidden by this filter."
+                      : "Approved submissions are collected here."}
+                  </p>
+                  <Link
+                    href={`/projects/${project.slug}?status=all`}
+                    className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  >
+                    View all work
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-border/70">
@@ -227,13 +305,13 @@ export default async function ProjectPage({
                 <section
                   key={workDate}
                   aria-label={workDateLabel(workDate, today)}
-                  className="px-4 py-4"
+                  className="px-5 py-4"
                 >
                   <header className="mb-3 flex items-baseline justify-between gap-3">
-                    <h3 className="text-sm font-medium">
+                    <h3 className="text-[15px] font-medium">
                       {workDateLabel(workDate, today)}
                     </h3>
-                    <p className="font-mono text-[11px] text-muted-foreground">
+                    <p className="font-mono text-xs text-muted-foreground">
                       {items.length}{" "}
                       {items.length === 1 ? "submission" : "submissions"}
                     </p>
@@ -257,14 +335,17 @@ export default async function ProjectPage({
 
         <aside
           aria-labelledby="members-heading"
-          className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10"
+          className="overflow-hidden rounded-2xl border border-border bg-card"
         >
-          <header className="border-b border-border/70 px-4 py-3">
-            <h2 id="members-heading" className="text-sm font-medium">
+          <header className="border-b border-border/70 px-5 py-4">
+            <h2
+              id="members-heading"
+              className="text-[17px] font-medium tracking-[-0.01em]"
+            >
               Members
             </h2>
           </header>
-          <ul className="divide-y divide-border/70 px-4">
+          <ul className="divide-y divide-border/70 px-5">
             {members.map((member) => (
               <li
                 key={member.userId}
@@ -276,8 +357,10 @@ export default async function ProjectPage({
                   size="sm"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm">{member.name}</span>
-                  <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                  <span className="block truncate text-[15px]">
+                    {member.name}
+                  </span>
+                  <span className="block truncate font-mono text-xs text-muted-foreground">
                     {member.email}
                   </span>
                 </span>

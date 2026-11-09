@@ -25,7 +25,7 @@ export default async function AdminUsersPage() {
   const adminCount = users.filter((user) => user.role === "ADMIN").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Admin"
         title="People"
@@ -35,10 +35,10 @@ export default async function AdminUsersPage() {
       />
 
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-sm font-medium text-muted-foreground">
+        <h2 className="text-[13px] font-medium text-muted-foreground">
           All accounts
         </h2>
-        <p className="font-mono text-[11px] text-muted-foreground">
+        <p className="font-mono text-xs text-muted-foreground">
           {activeCount} active · {adminCount}{" "}
           {adminCount === 1 ? "administrator" : "administrators"} ·{" "}
           {users.length} total
@@ -52,17 +52,19 @@ export default async function AdminUsersPage() {
           description="Add the first person. They will receive a temporary password and choose their own on first sign in."
         />
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
+        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
           {users.map((user) => (
             <li
               key={user.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4"
             >
               <UserAvatar name={user.name} image={user.image} size="lg" />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-medium">{user.name}</p>
+                  <p className="truncate text-[15px] font-medium">
+                    {user.name}
+                  </p>
                   <RoleBadge role={user.role} />
                   {user.isActive ? null : (
                     <Badge variant="outline" className="text-destructive">
@@ -75,7 +77,7 @@ export default async function AdminUsersPage() {
                     </Badge>
                   ) : null}
                 </div>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">
+                <p className="truncate font-mono text-xs text-muted-foreground">
                   {user.email}
                 </p>
               </div>
@@ -85,7 +87,7 @@ export default async function AdminUsersPage() {
                   {user.projectCount}{" "}
                   {user.projectCount === 1 ? "project" : "projects"}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Added {formatInstantDate(user.createdAt)}
                 </p>
               </div>

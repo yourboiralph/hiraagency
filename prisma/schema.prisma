@@ -41,6 +41,10 @@ enum TaskOrderStatus {
   CLOSED
 }
 
+enum NotificationType {
+  SUBMISSION_SUBMITTED
+}
+
 // ─────────────────────────────────────────────────────────────
 //  Auth
 // ─────────────────────────────────────────────────────────────
@@ -66,6 +70,7 @@ model User {
   reviews           Submission[]    @relation("Reviewer")
   createdProjects   Project[]       @relation("ProjectCreator")
   createdTaskOrders TaskOrder[]     @relation("TaskOrderCreator")
+  notifications     Notification[]  @relation("NotificationRecipient")
 }
 
 model Account {
@@ -196,12 +201,13 @@ model Submission {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  author    User              @relation("Author", fields: [authorId], references: [id], onDelete: Cascade)
-  reviewer  User?             @relation("Reviewer", fields: [reviewedById], references: [id])
-  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  taskOrder TaskOrder?        @relation(fields: [taskOrderId], references: [id], onDelete: SetNull)
-  links     SubmissionLink[]
-  images    SubmissionImage[]
+  author        User              @relation("Author", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewer      User?             @relation("Reviewer", fields: [reviewedById], references: [id])
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskOrder     TaskOrder?        @relation(fields: [taskOrderId], references: [id], onDelete: SetNull)
+  links         SubmissionLink[]
+  images        SubmissionImage[]
+  notifications Notification[]
 
   @@index([projectId, workDate])
   @@index([authorId, workDate])
@@ -232,5 +238,22 @@ model SubmissionImage {
 
   submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
+  @@index([submissionId])
+}
+
+/// One row per reviewer per submission. Created on submit, marked read when the
+/// submission is reviewed (or when the reviewer clears their inbox).
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  submissionId String?
+  type         NotificationType @default(SUBMISSION_SUBMITTED)
+  readAt       DateTime?
+  createdAt    DateTime         @default(now())
+
+  recipient  User        @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  submission Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt])
   @@index([submissionId])
 }

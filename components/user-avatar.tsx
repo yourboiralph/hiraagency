@@ -2,9 +2,9 @@ import { cn } from "@/lib/utils";
 
 const SIZES = {
   xs: "size-6 text-[9px]",
-  sm: "size-7 text-[10px]",
-  md: "size-8 text-[11px]",
-  lg: "size-9 text-xs",
+  sm: "size-8 text-[10px]",
+  md: "size-9 text-[11px]",
+  lg: "size-11 text-xs",
 } as const;
 
 function initials(name: string) {

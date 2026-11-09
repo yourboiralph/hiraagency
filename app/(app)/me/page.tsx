@@ -21,16 +21,16 @@ export default async function MyActivityPage() {
   const user = await requireUser();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="My profile"
         description="How you appear across the workspace."
       />
 
-      <div className="grid items-start gap-3 lg:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Profile picture</CardTitle>
+            <CardTitle className="text-[17px]">Profile picture</CardTitle>
             <CardDescription>
               Shown in the sidebar, member lists and next to your submissions.
             </CardDescription>
@@ -42,17 +42,17 @@ export default async function MyActivityPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Account</CardTitle>
+            <CardTitle className="text-[17px]">Account</CardTitle>
             <CardDescription>
               Managed by an administrator. Ask them if anything is wrong.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
+          <CardContent className="space-y-3 text-[15px]">
             <div className="flex items-center gap-3">
               <UserAvatar name={user.name} image={user.image} size="lg" />
               <div className="min-w-0">
                 <p className="truncate font-medium">{user.name}</p>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">
+                <p className="truncate font-mono text-xs text-muted-foreground">
                   {user.email}
                 </p>
               </div>
@@ -67,7 +67,7 @@ export default async function MyActivityPage() {
         </Card>
       </div>
 
-      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+      <p className="rounded-2xl border border-dashed border-border px-5 py-7 text-[15px] leading-relaxed text-muted-foreground">
         Your check-in and submission history will appear here in a later update.
       </p>
     </div>

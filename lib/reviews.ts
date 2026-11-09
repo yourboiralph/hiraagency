@@ -10,7 +10,7 @@ export type ReviewItem = {
   workDate: WorkDate;
   createdAt: Date;
   project: { id: string; name: string; slug: string; color: string; image: string | null };
-  author: { id: string; name: string; email: string };
+  author: { id: string; name: string; email: string; image: string | null };
   taskOrder: { id: string; title: string } | null;
   links: {
     id: string;
@@ -43,7 +43,7 @@ export async function listPendingReviews(
       project: {
         select: { id: true, name: true, slug: true, color: true, image: true },
       },
-      author: { select: { id: true, name: true, email: true } },
+      author: { select: { id: true, name: true, email: true, image: true } },
       taskOrder: { select: { id: true, title: true } },
       links: {
         orderBy: { position: "asc" },
@@ -70,4 +70,33 @@ export async function getPendingReviewSummary() {
   ]);
 
   return { count, oldestAt: oldest?.createdAt ?? null };
+}
+
+/** Pending submissions in a reviewer's scope (null = all projects). */
+export async function countPendingReviews(
+  options: { projectIds?: string[] | null } = {},
+): Promise<number> {
+  const { projectIds = null } = options;
+
+  return db.submission.count({
+    where: {
+      status: "PENDING",
+      ...(projectIds ? { projectId: { in: projectIds } } : {}),
+    },
+  });
+}
+
+/** Pending counts for the project cards, keyed by project id. */
+export async function getPendingCountsByProject(
+  projectIds: string[],
+): Promise<Map<string, number>> {
+  if (projectIds.length === 0) return new Map();
+
+  const rows = await db.submission.groupBy({
+    by: ["projectId"],
+    where: { status: "PENDING", projectId: { in: projectIds } },
+    _count: { _all: true },
+  });
+
+  return new Map(rows.map((row) => [row.projectId, row._count._all]));
 }

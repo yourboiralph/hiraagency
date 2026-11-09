@@ -79,7 +79,7 @@ export default async function TaskOrderPage({
     rejectedByViewer === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         back={{ href: `/projects/${project.slug}`, label: project.name }}
         eyebrow="Task order"
@@ -104,7 +104,7 @@ export default async function TaskOrderPage({
       {submitted === "1" ? (
         <div
           role="status"
-          className="flex items-start gap-2.5 rounded-lg border border-success/40 bg-success/10 p-3 text-sm"
+          className="flex items-start gap-2.5 rounded-xl border border-success/40 bg-success/10 p-4 text-sm"
         >
           <CheckCircleIcon
             weight="fill"
@@ -118,7 +118,7 @@ export default async function TaskOrderPage({
       {rejectedByViewer > 0 ? (
         <div
           role="status"
-          className="flex items-start gap-2.5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm"
+          className="flex items-start gap-2.5 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm"
         >
           <WarningCircleIcon
             weight="fill"
@@ -147,18 +147,21 @@ export default async function TaskOrderPage({
       <div className="space-y-3">
         <section
           aria-labelledby="brief-heading"
-          className="rounded-xl bg-card p-4 ring-1 ring-foreground/10"
+          className="rounded-2xl border border-border bg-card p-5"
         >
-          <h2 id="brief-heading" className="text-sm font-medium">
+          <h2
+            id="brief-heading"
+            className="text-[17px] font-medium tracking-[-0.01em]"
+          >
             Brief
           </h2>
 
           {order.brief ? (
-            <p className="mt-2 whitespace-pre-line text-sm [overflow-wrap:anywhere] text-muted-foreground">
+            <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
               {order.brief}
             </p>
           ) : (
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
               No brief was provided. Ask the lead for the details before
               starting.
             </p>
@@ -222,11 +225,14 @@ export default async function TaskOrderPage({
 
         <section
           aria-labelledby="work-heading"
-          className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10"
+          className="overflow-hidden rounded-2xl border border-border bg-card"
         >
-          <header className="flex items-baseline justify-between gap-3 border-b border-border/70 px-4 py-3">
+          <header className="flex items-baseline justify-between gap-3 border-b border-border/70 px-5 py-4">
             <div>
-              <h2 id="work-heading" className="text-sm font-medium">
+              <h2
+                id="work-heading"
+                className="text-[17px] font-medium tracking-[-0.01em]"
+              >
                 Work on this order
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -234,16 +240,16 @@ export default async function TaskOrderPage({
               </p>
             </div>
             {submissions.length > 0 ? (
-              <p className="font-mono text-[11px] text-muted-foreground">
+              <p className="font-mono text-xs text-muted-foreground">
                 {submissions.length} shown
               </p>
             ) : null}
           </header>
 
           {submissions.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <p className="text-sm font-medium">No work attached yet</p>
-              <p className="mx-auto mt-1 max-w-xs text-xs text-muted-foreground">
+            <div className="px-5 py-14 text-center">
+              <p className="text-[15px] font-medium">No work attached yet</p>
+              <p className="mx-auto mt-1 max-w-xs text-sm leading-relaxed text-muted-foreground">
                 {isOpen
                   ? "Members can submit links against this order."
                   : "This order is closed to new work."}
@@ -251,7 +257,7 @@ export default async function TaskOrderPage({
               {canSubmit ? (
                 <Link
                   href={`/projects/${project.slug}/submit?taskOrderId=${order.id}`}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-primary hover:underline hover:underline-offset-4"
                 >
                   Submit the first link
                 </Link>

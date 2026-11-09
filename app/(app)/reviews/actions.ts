@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { requireUser } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { markSubmissionNotificationsRead } from "@/lib/notifications";
 import { fieldErrorsOf } from "@/lib/validation/errors";
 
 export type ReviewState = {
@@ -101,7 +102,13 @@ async function decide(
     return { formError: "This submission was already reviewed." };
   }
 
+  // The decision settles the notification for every reviewer.
+  await markSubmissionNotificationsRead(loaded.submission.id);
+
   revalidateReviewSurfaces(loaded.submission.project.slug);
+  // Refresh the sidebar badge along with the pages.
+  revalidatePath("/", "layout");
+
   return { ok: true };
 }
 

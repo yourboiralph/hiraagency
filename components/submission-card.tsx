@@ -34,7 +34,7 @@ export function SubmissionCard({
         : "Sent back";
 
   return (
-    <li className="rounded-lg border border-border/70 p-3">
+    <li className="rounded-xl border border-border/70 p-4">
       <div className="flex items-start gap-2.5">
         <UserAvatar
           name={submission.author.name}
@@ -44,10 +44,10 @@ export function SubmissionCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <p className="[overflow-wrap:anywhere] text-sm font-medium">
+            <p className="[overflow-wrap:anywhere] text-[15px] font-medium">
               {submission.author.name}
             </p>
-            <span className="font-mono text-[11px] text-muted-foreground">
+            <span className="font-mono text-xs text-muted-foreground">
               logged {loggedAt}
             </span>
             <SubmissionStatusBadge status={submission.status} />
@@ -57,17 +57,19 @@ export function SubmissionCard({
           (!submission.taskOrder.hidden || showHiddenTaskOrders) ? (
             <Link
               href={`/projects/${projectSlug}/task-orders/${submission.taskOrder.id}`}
-              className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-md bg-info/10 px-2 py-1 text-[11px] text-info transition-colors hover:bg-info/20"
+              className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-md bg-info/10 px-2 py-1 text-xs text-info transition-colors hover:bg-info/20"
             >
               <ClipboardTextIcon aria-hidden="true" className="size-3.5 shrink-0" />
               <span className="truncate">{submission.taskOrder.title}</span>
             </Link>
           ) : null}
 
-          <p className="mt-1.5 text-sm [overflow-wrap:anywhere]">{submission.title}</p>
+          <p className="mt-2 text-[15px] [overflow-wrap:anywhere]">
+            {submission.title}
+          </p>
 
           {submission.notes ? (
-            <p className="mt-1 whitespace-pre-line text-xs [overflow-wrap:anywhere] text-muted-foreground">
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
               {submission.notes}
             </p>
           ) : null}
@@ -89,7 +91,7 @@ export function SubmissionCard({
                       src={`/api/media/${image.key}`}
                       alt=""
                       loading="lazy"
-                      className="size-full object-cover transition-transform duration-200 hover:scale-105"
+                      className="size-full object-cover transition-transform duration-[600ms] ease-out hover:scale-[1.03]"
                     />
                   </a>
                 </li>
@@ -100,7 +102,7 @@ export function SubmissionCard({
           {submission.reviewNote ? (
             <p
               className={cn(
-                "mt-2 rounded-md px-2 py-1.5 text-xs [overflow-wrap:anywhere]",
+                "mt-2 rounded-md px-2 py-1.5 text-[13px] [overflow-wrap:anywhere]",
                 submission.status === "APPROVED"
                   ? "bg-muted/50 text-muted-foreground"
                   : "bg-destructive/10 text-destructive",
@@ -112,7 +114,7 @@ export function SubmissionCard({
           ) : null}
 
           {submission.status !== "PENDING" ? (
-            <p className="mt-2 text-[11px] text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               {decision} by {submission.reviewer?.name ?? "an administrator"}
               {submission.reviewedAt
                 ? ` · ${formatInstantDate(submission.reviewedAt)}`

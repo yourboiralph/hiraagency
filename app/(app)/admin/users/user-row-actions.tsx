@@ -15,7 +15,7 @@ export function UserRowActions({
       <ResetPasswordButton userId={user.id} name={user.name} />
 
       {user.isSelf ? (
-        <span className="px-2 font-mono text-[11px] text-muted-foreground">
+        <span className="px-2 font-mono text-xs text-muted-foreground">
           You
         </span>
       ) : (

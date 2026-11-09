@@ -26,7 +26,7 @@ export function ProjectStatusCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">
+        <CardTitle className="text-[17px]">
           {archiving ? "Archive project" : "Restore project"}
         </CardTitle>
         <CardDescription>

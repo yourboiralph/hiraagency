@@ -86,7 +86,7 @@ export function SubmissionImagePicker() {
           Pictures{" "}
           <span className="font-normal text-muted-foreground">optional</span>
         </p>
-        <span className="font-mono text-[11px] text-muted-foreground">
+        <span className="font-mono text-xs text-muted-foreground">
           {keys.length} of {MAX_SUBMISSION_IMAGES}
         </span>
       </div>

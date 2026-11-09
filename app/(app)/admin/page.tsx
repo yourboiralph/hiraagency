@@ -47,17 +47,17 @@ function SectionLink({
   return (
     <Link
       href={href}
-      className="group flex items-start gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="card-lift group flex items-start gap-3 rounded-2xl border border-border bg-card p-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">{title}</span>
-        <span className="mt-0.5 block text-xs text-muted-foreground">
+        <span className="block text-[15px] font-medium">{title}</span>
+        <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
           {description}
         </span>
-        <span className="mt-2 block font-mono text-[11px] text-muted-foreground">
+        <span className="mt-2 block font-mono text-xs text-muted-foreground">
           {meta}
         </span>
       </span>
@@ -77,16 +77,16 @@ function AttendeeLine({ person }: { person: Attendee }) {
       <span
         aria-hidden="true"
         className={`size-1.5 shrink-0 rounded-full ${
-          attendance ? "bg-primary" : "bg-warning"
+          attendance ? "bg-success" : "bg-warning"
         }`}
       />
-      <span className="min-w-0 flex-1 truncate text-sm">{person.name}</span>
+      <span className="min-w-0 flex-1 truncate text-[15px]">{person.name}</span>
       {attendance?.checkOutAt ? (
-        <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
+        <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
           {formatDuration(attendance.checkInAt, attendance.checkOutAt)}
         </span>
       ) : null}
-      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+      <span className="shrink-0 font-mono text-xs text-muted-foreground">
         {attendance === null
           ? "—"
           : attendance.checkOutAt
@@ -112,7 +112,7 @@ export default async function AdminPage() {
     ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Admin"
         title="Overview"
@@ -121,7 +121,7 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Today&apos;s attendance</CardTitle>
+          <CardTitle className="text-[17px]">Today&apos;s attendance</CardTitle>
           <CardDescription>
             {formatWorkDate(today, "long")} ·{" "}
             <span className="font-mono text-foreground">
@@ -132,7 +132,7 @@ export default async function AdminPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-[13px] font-medium text-muted-foreground">
               Not checked in · {roster.absent.length}
             </h3>
             {roster.absent.length === 0 ? (
@@ -149,7 +149,7 @@ export default async function AdminPage() {
           </div>
 
           <div>
-            <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-[13px] font-medium text-muted-foreground">
               Checked in · {roster.checkedIn}
             </h3>
             {roster.present.length === 0 ? (
@@ -169,7 +169,7 @@ export default async function AdminPage() {
 
       <section
         aria-label="Manage"
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
       >
         <SectionLink
           href="/admin/projects"

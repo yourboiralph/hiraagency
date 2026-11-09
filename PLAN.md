@@ -99,6 +99,7 @@ enum ProjectRole      { LEAD MEMBER }
 enum ProjectStatus    { ACTIVE ARCHIVED }
 enum SubmissionStatus { PENDING APPROVED NEEDS_REVISION REJECTED }
 enum TaskOrderStatus  { OPEN CLOSED }
+enum NotificationType { SUBMISSION_SUBMITTED }
 
 model User {
   id               String   @id @default(cuid())
@@ -275,6 +276,22 @@ model SubmissionImage {
 
   @@index([submissionId])
 }
+
+// One per reviewer per submission; read when reviewed or cleared manually.
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  submissionId String?
+  type         NotificationType @default(SUBMISSION_SUBMITTED)
+  readAt       DateTime?
+  createdAt    DateTime         @default(now())
+
+  recipient  User        @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  submission Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt])
+  @@index([submissionId])
+}
 ```
 
 ---
@@ -373,6 +390,10 @@ These differ from the original assumptions and are now the real state of the rep
 | **Rejection** | New final status `REJECTED` with a required reason (3-500 chars). All three decisions run `updateMany` on `status: "PENDING"` | final by design; no undo path, and two reviewers cannot race |
 | **Rejected task orders** | A rejected submission blocks that member from attaching new work to the same order; other submissions that day are unaffected | matches the rule: no more work for that order, still free to work that day |
 | **Bucket CORS** | The Neon bucket must allow browser `PUT`/`GET`/`HEAD` from the app origins with `Content-Type` allowed | presigned uploads are cross-origin; without CORS the upload fails in the browser |
+| **Feed filter** | The project feed defaults to `PENDING`; `?status=approved` and `?status=all` are URL state. Needs-revision and rejected entries appear under All | server-rendered links, no client state, and the view is shareable/bookmarkable |
+| **Review identity** | Review cards lead with the author's avatar and name; the project is a small line with a color dot | the queue is about the person's work, and showing the project first read as the project itself being reviewed |
+| **Notifications** | Created on submit for every active admin plus the project's leads, excluding the author. Marked read by a review decision, or by "Mark all as read" | reviewers find out without polling; the count means unhandled work |
+| **Notification surfaces** | Sidebar badge + `/notifications`, dashboard "Waiting for review" card, per-project pending badges | the same event is visible where reviewers already look |
 
 ---
 
@@ -463,13 +484,14 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 - `/set-password` — forced on first login
 
 ### Member
-- `/dashboard` — check-in card (3 states: not checked in / working / done), today's work, project summary
-- `/projects` — cards: project color, member count, my last submission
-- `/projects/[slug]` — task orders section, feed grouped by day, member avatars, my status per day
+- `/dashboard` — check-in card (3 states: not checked in / working / done), "Waiting for review" for reviewers, today's work, project summary
+- `/projects` — cards: project color, member count, pending count for reviewers, my last submission
+- `/projects/[slug]` — task orders section, feed grouped by day and filtered by status (Pending by default; Approved / All), member avatars, my status per day
 - `/projects/[slug]/task-orders/[id]` — brief, open/closed state, work attached to the order
 - `/projects/[slug]/submit` — date picker (≤ today, ≥ -7d), title, optional task order, N links, up to 6 pictures, notes
 - `/me` — profile picture and account; check-in/submission history still pending
 - `/reviews` — visible to admins and project leads; a lead sees only projects they lead. Approve / request revision / reject with a reason
+- `/notifications` — unread submission notifications for reviewers, mark all as read
 
 ### Admin
 - `/admin` — today's attendance (checked in n/m, missing list with times), entry points to projects and people
@@ -493,6 +515,7 @@ Generated with `ui-ux-pro-max` → query `"saas admin dashboard operations"`, di
 | 5b | Task orders | ✅ Leads/admins post briefs; members attach work; closing blocks new submissions |
 | 5c | Media | ✅ Submission pictures, project covers and avatars on Neon Object Storage |
 | 5d | Rejection | ✅ Leads review their projects; reject with a reason; rejected orders close to that member |
+| 5e | Notifications | ✅ Sidebar badge, inbox, dashboard card and project pending counts for reviewers |
 | 6 | Polish | Heatmap, empty states, a11y pass, mobile, dark/light, seed data |
 
 ---

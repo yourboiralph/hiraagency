@@ -160,7 +160,7 @@ export function SubmissionForm({
       <fieldset className="space-y-3">
         <div className="flex items-baseline justify-between gap-3">
           <legend className="text-sm font-medium">Links</legend>
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="font-mono text-xs text-muted-foreground">
             {rows.length} of {MAX_SUBMISSION_LINKS}
           </span>
         </div>

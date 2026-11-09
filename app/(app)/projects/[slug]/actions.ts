@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
 import { toDbDate } from "@/lib/date";
 import { db } from "@/lib/db";
+import { notifyReviewersOfSubmission } from "@/lib/notifications";
 import { MAX_SUBMISSION_IMAGES } from "@/lib/submission-constants";
 import { verifyUploadedImage } from "@/lib/storage";
 import { parseSubmission } from "@/lib/validation/submission";
@@ -127,8 +128,10 @@ export async function createSubmissionAction(
     }
   }
 
+  let created: { id: string };
+
   try {
-    await db.submission.create({
+    created = await db.submission.create({
       data: {
         authorId: user.id,
         projectId: project.id,
@@ -146,15 +149,29 @@ export async function createSubmissionAction(
           create: imageKeys.map((key, position) => ({ key, position })),
         },
       },
+      select: { id: true },
     });
   } catch {
     return { formError: "Your links could not be saved. Try again." };
+  }
+
+  // Reviewers find out about the new work; a notification failure must not
+  // hide the submission that was already saved.
+  try {
+    await notifyReviewersOfSubmission({
+      submissionId: created.id,
+      projectId: project.id,
+      authorId: user.id,
+    });
+  } catch {
+    // best effort
   }
 
   revalidatePath(`/projects/${project.slug}`);
   revalidatePath("/projects");
   revalidatePath("/dashboard");
   revalidatePath("/admin");
+  revalidatePath("/notifications");
 
   // Send people back to the order they were filling when that is the context.
   redirect(

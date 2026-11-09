@@ -34,12 +34,17 @@ export type FeedSubmission = {
 
 export async function listProjectSubmissions(
   projectId: string,
-  options: { take?: number; taskOrderId?: string } = {},
+  options: {
+    take?: number;
+    taskOrderId?: string;
+    statuses?: SubmissionStatus[];
+  } = {},
 ): Promise<FeedSubmission[]> {
   const rows = await db.submission.findMany({
     where: {
       projectId,
       ...(options.taskOrderId ? { taskOrderId: options.taskOrderId } : {}),
+      ...(options.statuses ? { status: { in: options.statuses } } : {}),
     },
     orderBy: [{ workDate: "desc" }, { createdAt: "desc" }],
     take: options.take ?? 60,

@@ -43,7 +43,7 @@ export default async function SubmitWorkPage({
     : undefined;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-8">
       <PageHeader
         back={{ href: `/projects/${project.slug}`, label: project.name }}
         eyebrow="Submit work"
@@ -67,7 +67,7 @@ export default async function SubmitWorkPage({
           </p>
         </div>
       ) : (
-        <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10 sm:p-6">
+        <div className="rounded-2xl border border-border bg-card p-5 sm:p-7">
           <SubmissionForm
             projectId={project.id}
             projectSlug={project.slug}

@@ -79,38 +79,44 @@ export async function requireAdmin(): Promise<SessionUser> {
   return user;
 }
 
-/**
- * Reviews are open to global administrators and to project leads. A lead's
- * scope is the list of projects they lead; `null` means "everything".
- */
-export async function requireReviewer(): Promise<{
-  user: SessionUser;
+export type ReviewerScope = {
+  canReview: boolean;
+  /** `null` means every project (administrators). */
   projectIds: string[] | null;
-}> {
-  const user = await requireUser();
+};
 
-  if (user.role === "ADMIN") return { user, projectIds: null };
+/**
+ * Reviews and notifications are open to global administrators and to project
+ * leads. Leads are scoped to the projects where they hold the LEAD role.
+ */
+export async function getReviewerScope(
+  user: SessionUser,
+): Promise<ReviewerScope> {
+  if (user.role === "ADMIN") {
+    return { canReview: true, projectIds: null };
+  }
 
   const memberships = await db.projectMember.findMany({
     where: { userId: user.id, role: "LEAD" },
     select: { projectId: true },
   });
 
-  if (memberships.length === 0) redirect("/dashboard");
-
-  return { user, projectIds: memberships.map((member) => member.projectId) };
+  return {
+    canReview: memberships.length > 0,
+    projectIds: memberships.map((member) => member.projectId),
+  };
 }
 
-/** Cheap check for showing the Reviews link without running the page. */
-export async function canReview(user: SessionUser): Promise<boolean> {
-  if (user.role === "ADMIN") return true;
+export async function requireReviewer(): Promise<{
+  user: SessionUser;
+  projectIds: string[] | null;
+}> {
+  const user = await requireUser();
+  const scope = await getReviewerScope(user);
 
-  const lead = await db.projectMember.findFirst({
-    where: { userId: user.id, role: "LEAD" },
-    select: { projectId: true },
-  });
+  if (!scope.canReview) redirect("/dashboard");
 
-  return Boolean(lead);
+  return { user, projectIds: scope.projectIds };
 }
 
 /**
