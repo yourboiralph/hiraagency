@@ -81,6 +81,9 @@ export default async function ProjectPage({
   const filter = parseFeedFilter(status);
   const calendarView = view !== "feed";
   const canViewAllDetails = canViewSubmissionDetails(user, myRole);
+  // Ordinary members get a personal activity calendar. Leads and admins
+  // review the team, so their markers stay project-wide.
+  const personalActivity = !canViewAllDetails;
 
   const today = workDateToday();
   const requestedDay = day ? parseWorkDate(day) : null;
@@ -103,6 +106,7 @@ export default async function ProjectPage({
         ? countProjectSubmissionsByWorkDate(
             project.id,
             monthGridRange(monthKey),
+            personalActivity ? { authorId: user.id } : {},
           )
         : Promise.resolve(new Map<string, number>()),
       calendarView
@@ -258,11 +262,17 @@ export default async function ProjectPage({
                   id="work-heading"
                   className="text-[17px] font-medium tracking-[-0.01em]"
                 >
-                  {calendarView ? "Work calendar" : "Work feed"}
+                  {calendarView
+                    ? personalActivity
+                      ? "Your work calendar"
+                      : "Work calendar"
+                    : "Work feed"}
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {calendarView
-                    ? "Pick a day to see the work logged on it."
+                    ? personalActivity
+                      ? "Dots mark the days you submitted. Pick one to open it."
+                      : "Pick a day to see the work logged on it."
                     : "Grouped by workday, newest first."}
                 </p>
               </div>
@@ -363,6 +373,7 @@ export default async function ProjectPage({
               submissions={daySubmissions}
               canSubmit={canSubmit}
               projectActive={project.status === "ACTIVE"}
+              personal={personalActivity}
               canViewAllDetails={canViewAllDetails}
               showHiddenTaskOrders={canManageOrders}
               viewerId={user.id}

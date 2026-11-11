@@ -77,6 +77,7 @@ export function WorkCalendar({
   submissions,
   canSubmit,
   projectActive,
+  personal,
   canViewAllDetails,
   showHiddenTaskOrders,
   viewerId,
@@ -88,6 +89,8 @@ export function WorkCalendar({
   submissions: FeedSubmission[];
   canSubmit: boolean;
   projectActive: boolean;
+  /** Ordinary members see only their own marks, so a dot always means "you". */
+  personal: boolean;
   canViewAllDetails: boolean;
   showHiddenTaskOrders: boolean;
   viewerId: string;
@@ -152,10 +155,16 @@ export function WorkCalendar({
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {monthTotal === 0
-                ? "No work logged this month."
-                : `${monthTotal} ${
-                    monthTotal === 1 ? "submission" : "submissions"
-                  } across ${activeDays} ${activeDays === 1 ? "day" : "days"}`}
+                ? personal
+                  ? "No work logged by you this month."
+                  : "No work logged this month."
+                : personal
+                  ? `You logged ${monthTotal} ${
+                      monthTotal === 1 ? "submission" : "submissions"
+                    } across ${activeDays} ${activeDays === 1 ? "day" : "days"}`
+                  : `${monthTotal} ${
+                      monthTotal === 1 ? "submission" : "submissions"
+                    } across ${activeDays} ${activeDays === 1 ? "day" : "days"}`}
             </p>
           </div>
 
@@ -298,8 +307,9 @@ export function WorkCalendar({
         </table>
 
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Each day shows how many submissions were logged. Pick a day to open
-          it.
+          {personal
+            ? "Each day shows what you logged. Pick a day to open it."
+            : "Each day shows how many submissions were logged. Pick a day to open it."}
         </p>
       </div>
 

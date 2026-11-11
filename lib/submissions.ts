@@ -115,11 +115,13 @@ export async function listProjectSubmissions(
 export async function countProjectSubmissionsByWorkDate(
   projectId: string,
   range: { from: WorkDate; to: WorkDate },
+  options: { authorId?: string } = {},
 ): Promise<Map<WorkDate, number>> {
   const rows = await db.submission.groupBy({
     by: ["workDate"],
     where: {
       projectId,
+      ...(options.authorId ? { authorId: options.authorId } : {}),
       workDate: {
         gte: toDbDate(range.from),
         lte: toDbDate(range.to),
