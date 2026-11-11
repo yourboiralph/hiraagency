@@ -31,6 +31,8 @@ export function SubmissionForm({
   maxBackdateDays,
   taskOrders,
   defaultTaskOrderId,
+  defaultWorkDate,
+  fromCalendar = false,
 }: {
   projectId: string;
   projectSlug: string;
@@ -39,6 +41,8 @@ export function SubmissionForm({
   maxBackdateDays: number;
   taskOrders: { id: string; title: string }[];
   defaultTaskOrderId?: string;
+  defaultWorkDate: string;
+  fromCalendar?: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(
     createSubmissionAction,
@@ -75,6 +79,9 @@ export function SubmissionForm({
   return (
     <form action={formAction} noValidate className="space-y-6">
       <input type="hidden" name="projectId" value={projectId} />
+      {fromCalendar ? (
+        <input type="hidden" name="fromCalendar" value="1" />
+      ) : null}
 
       <FormErrorSummary
         message={state.formError}
@@ -90,7 +97,7 @@ export function SubmissionForm({
           required
           min={minDate}
           max={today}
-          defaultValue={today}
+          defaultValue={defaultWorkDate}
           aria-invalid={Boolean(fieldErrors.workDate)}
           aria-describedby={
             fieldErrors.workDate ? `${prefix}-date-error` : `${prefix}-date-hint`
@@ -103,8 +110,9 @@ export function SubmissionForm({
           </p>
         ) : (
           <p id={`${prefix}-date-hint`} className="text-xs text-muted-foreground">
-            Today or up to {maxBackdateDays} days back. Future dates are not
-            allowed.
+            {fromCalendar
+              ? `Prefilled from the calendar. Pick another day if needed — today or up to ${maxBackdateDays} days back.`
+              : `Today or up to ${maxBackdateDays} days back. Future dates are not allowed.`}
           </p>
         )}
       </div>
@@ -302,7 +310,11 @@ export function SubmissionForm({
         </p>
         <div className="flex items-center gap-2">
           <Link
-            href={`/projects/${projectSlug}`}
+            href={
+              fromCalendar
+                ? `/projects/${projectSlug}?view=calendar&day=${defaultWorkDate}`
+                : `/projects/${projectSlug}`
+            }
             className={buttonVariants({ variant: "ghost", size: "sm" })}
           >
             Cancel

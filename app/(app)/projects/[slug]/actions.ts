@@ -174,9 +174,14 @@ export async function createSubmissionAction(
   revalidatePath("/notifications");
 
   // Send people back to the order they were filling when that is the context.
+  // A submission started from the project calendar returns to that same day.
+  const fromCalendar = formData.get("fromCalendar") === "1";
+
   redirect(
     taskOrderId
       ? `/projects/${project.slug}/task-orders/${taskOrderId}?submitted=1`
-      : `/projects/${project.slug}?submitted=1`,
+      : fromCalendar
+        ? `/projects/${project.slug}?view=calendar&day=${parsed.data.workDate}&submitted=1`
+        : `/projects/${project.slug}?submitted=1`,
   );
 }

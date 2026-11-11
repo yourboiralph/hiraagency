@@ -82,16 +82,24 @@ export function isAllowedWorkDate(
 
 export function formatWorkDate(
   workDate: WorkDate,
-  style: "short" | "long" | "weekday" = "short",
+  style: "short" | "long" | "weekday" | "full" = "short",
 ): string {
   const d = toDbDate(workDate);
 
   const options: Intl.DateTimeFormatOptions =
-    style === "long"
-      ? { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }
-      : style === "weekday"
-        ? { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }
-        : { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" };
+    style === "full"
+      ? {
+          timeZone: "UTC",
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }
+      : style === "long"
+        ? { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }
+        : style === "weekday"
+          ? { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }
+          : { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" };
 
   return new Intl.DateTimeFormat("en-PH", options).format(d);
 }

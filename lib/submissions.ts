@@ -41,6 +41,8 @@ export async function listProjectSubmissions(
   options: {
     take?: number;
     taskOrderId?: string;
+    /** Only work dated for this calendar day. */
+    workDate?: WorkDate;
     statuses?: SubmissionStatus[];
     /** Leads and admins see every submission's notes, links and images. */
     canViewAllDetails?: boolean;
@@ -56,6 +58,7 @@ export async function listProjectSubmissions(
     where: {
       projectId,
       ...(options.taskOrderId ? { taskOrderId: options.taskOrderId } : {}),
+      ...(options.workDate ? { workDate: toDbDate(options.workDate) } : {}),
       ...(options.statuses ? { status: { in: options.statuses } } : {}),
     },
     orderBy: [{ workDate: "desc" }, { createdAt: "desc" }],
@@ -106,6 +109,28 @@ export async function listProjectSubmissions(
           counts.images > 0),
     };
   });
+}
+
+/** Submissions per workday for a range, used to mark the project calendar. */
+export async function countProjectSubmissionsByWorkDate(
+  projectId: string,
+  range: { from: WorkDate; to: WorkDate },
+): Promise<Map<WorkDate, number>> {
+  const rows = await db.submission.groupBy({
+    by: ["workDate"],
+    where: {
+      projectId,
+      workDate: {
+        gte: toDbDate(range.from),
+        lte: toDbDate(range.to),
+      },
+    },
+    _count: { _all: true },
+  });
+
+  return new Map(
+    rows.map((row) => [fromDbDate(row.workDate), row._count._all]),
+  );
 }
 
 /** Dashboard: what this person submitted for one workday, newest first. */

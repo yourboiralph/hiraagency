@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  CalendarDotsIcon,
   CheckCircleIcon,
   ClipboardTextIcon,
   PlusIcon,
+  RowsIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { PageHeader } from "@/components/page-header";
@@ -19,19 +21,23 @@ import { buttonVariants } from "@/components/ui/button";
 import { canViewSubmissionDetails, requireUser } from "@/lib/authz";
 import {
   formatInstantDate,
+  parseWorkDate,
   workDateLabel,
   workDateToday,
 } from "@/lib/date";
 import { getProjectForUser } from "@/lib/projects";
 import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
 import {
+  countProjectSubmissionsByWorkDate,
   listProjectSubmissions,
   type FeedSubmission,
 } from "@/lib/submissions";
 import { cn } from "@/lib/utils";
 import { canManageTaskOrders, listTaskOrders } from "@/lib/task-orders";
+import { monthGridRange, monthKeyOf } from "@/lib/work-calendar";
 
 import { NewTaskOrderDialog } from "./task-orders/new-task-order-dialog";
+import { WorkCalendar } from "./work-calendar";
 
 export const metadata: Metadata = {
   title: "Project",
@@ -60,27 +66,56 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ submitted?: string; status?: string }>;
+  searchParams: Promise<{
+    submitted?: string;
+    status?: string;
+    view?: string;
+    day?: string;
+  }>;
 }) {
   const user = await requireUser();
   const { slug } = await params;
-  const { submitted, status } = await searchParams;
+  const { submitted, status, view, day } = await searchParams;
   const { project, myRole, members } = await getProjectForUser(slug, user);
 
   const filter = parseFeedFilter(status);
+  const calendarView = view !== "feed";
   const canViewAllDetails = canViewSubmissionDetails(user, myRole);
 
-  const submissions = await listProjectSubmissions(project.id, {
-    statuses: FEED_STATUSES[filter],
-    canViewAllDetails,
-    viewerId: user.id,
-  });
   const today = workDateToday();
+  const requestedDay = day ? parseWorkDate(day) : null;
+  const selectedDay =
+    requestedDay && requestedDay <= today ? requestedDay : today;
+  const monthKey = monthKeyOf(selectedDay);
   const canSubmit = myRole !== null && project.status === "ACTIVE";
   const canManageOrders = canManageTaskOrders(user, myRole);
-  const taskOrders = await listTaskOrders(project.id, {
-    includeHidden: canManageOrders,
-  });
+
+  const [submissions, monthCounts, daySubmissions, taskOrders] =
+    await Promise.all([
+      calendarView
+        ? Promise.resolve<FeedSubmission[]>([])
+        : listProjectSubmissions(project.id, {
+            statuses: FEED_STATUSES[filter],
+            canViewAllDetails,
+            viewerId: user.id,
+          }),
+      calendarView
+        ? countProjectSubmissionsByWorkDate(
+            project.id,
+            monthGridRange(monthKey),
+          )
+        : Promise.resolve(new Map<string, number>()),
+      calendarView
+        ? listProjectSubmissions(project.id, {
+            workDate: selectedDay,
+            canViewAllDetails,
+            viewerId: user.id,
+          })
+        : Promise.resolve<FeedSubmission[]>([]),
+      listTaskOrders(project.id, {
+        includeHidden: canManageOrders,
+      }),
+    ]);
 
   const grouped = new Map<string, FeedSubmission[]>();
   for (const submission of submissions) {
@@ -211,59 +246,128 @@ export default async function ProjectPage({
         )}
       </section>
 
-      <div className="grid items-start gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
         <section
-          aria-labelledby="feed-heading"
-          className="overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2"
+          aria-labelledby="work-heading"
+          className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2"
         >
           <header className="space-y-3 border-b border-border/70 px-5 py-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2
-                  id="feed-heading"
+                  id="work-heading"
                   className="text-[17px] font-medium tracking-[-0.01em]"
                 >
-                  Work feed
+                  {calendarView ? "Work calendar" : "Work feed"}
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Grouped by workday, newest first.
+                  {calendarView
+                    ? "Pick a day to see the work logged on it."
+                    : "Grouped by workday, newest first."}
                 </p>
               </div>
-              {submissions.length > 0 ? (
-                <p className="font-mono text-xs text-muted-foreground">
-                  {submissions.length} shown
-                </p>
-              ) : null}
-            </div>
 
-            <nav aria-label="Filter work by status" className="flex flex-wrap gap-1">
-              {FEED_FILTERS.map((option) => {
-                const active = option.value === filter;
-                const href =
-                  option.value === "pending"
-                    ? `/projects/${project.slug}`
-                    : `/projects/${project.slug}?status=${option.value}`;
+              <div className="flex flex-wrap items-center gap-3">
+                {!calendarView && submissions.length > 0 ? (
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {submissions.length} shown
+                  </p>
+                ) : null}
 
-                return (
+                <div
+                  role="group"
+                  aria-label="Work view"
+                  className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted/50 p-0.5"
+                >
                   <Link
-                    key={option.value}
-                    href={href}
-                    aria-current={active ? "page" : undefined}
+                    href={
+                      filter === "pending"
+                        ? `/projects/${project.slug}?view=feed`
+                        : `/projects/${project.slug}?view=feed&status=${filter}`
+                    }
+                    scroll={false}
+                    aria-current={!calendarView ? "page" : undefined}
                     className={cn(
-                      "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                      active
-                        ? "bg-accent font-medium text-accent-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                      !calendarView
+                        ? "bg-background font-medium text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {option.label}
+                    <RowsIcon aria-hidden="true" className="size-3.5" />
+                    Feed
                   </Link>
-                );
-              })}
-            </nav>
+                  <Link
+                    href={
+                      calendarView
+                        ? `/projects/${project.slug}?view=calendar&day=${selectedDay}`
+                        : `/projects/${project.slug}?view=calendar`
+                    }
+                    scroll={false}
+                    aria-current={calendarView ? "page" : undefined}
+                    className={cn(
+                      "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                      calendarView
+                        ? "bg-background font-medium text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <CalendarDotsIcon
+                      aria-hidden="true"
+                      className="size-3.5"
+                    />
+                    Calendar
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {!calendarView ? (
+              <nav
+                aria-label="Filter work by status"
+                className="flex flex-wrap gap-1"
+              >
+                {FEED_FILTERS.map((option) => {
+                  const active = option.value === filter;
+                  const href =
+                    option.value === "pending"
+                      ? `/projects/${project.slug}?view=feed`
+                      : `/projects/${project.slug}?view=feed&status=${option.value}`;
+
+                  return (
+                    <Link
+                      key={option.value}
+                      href={href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                        active
+                          ? "bg-accent font-medium text-accent-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {option.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            ) : null}
           </header>
 
-          {submissions.length === 0 ? (
+          {calendarView ? (
+            <WorkCalendar
+              projectSlug={project.slug}
+              selectedDay={selectedDay}
+              today={today}
+              counts={monthCounts}
+              submissions={daySubmissions}
+              canSubmit={canSubmit}
+              projectActive={project.status === "ACTIVE"}
+              canViewAllDetails={canViewAllDetails}
+              showHiddenTaskOrders={canManageOrders}
+              viewerId={user.id}
+            />
+          ) : submissions.length === 0 ? (
             <div className="px-4 py-12 text-center">
               {project._count.submissions === 0 ? (
                 <>
@@ -294,7 +398,7 @@ export default async function ProjectPage({
                       : "Approved submissions are collected here."}
                   </p>
                   <Link
-                    href={`/projects/${project.slug}?status=all`}
+                    href={`/projects/${project.slug}?view=feed&status=all`}
                     className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
                   >
                     View all work
@@ -340,7 +444,7 @@ export default async function ProjectPage({
 
         <aside
           aria-labelledby="members-heading"
-          className="overflow-hidden rounded-2xl border border-border bg-card"
+          className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card"
         >
           <header className="border-b border-border/70 px-5 py-4">
             <h2
